@@ -18,6 +18,81 @@ let cars = [];
 // Guarda la posición del fondo para recuperarla al cerrar.
 let dialogScrollPosition = 0;
 
+// El menú personalizado sincroniza el select original.
+const gamePicker = document.querySelector(".game-picker");
+const gamePickerButton = document.querySelector("#game-picker-button");
+const gamePickerValue = document.querySelector("#game-picker-value");
+const gamePickerMenu = document.querySelector("#game-picker-menu");
+const gamePickerOptions = [...gamePickerMenu.querySelectorAll("[data-game]")];
+
+function syncGamePicker() {
+  gamePickerValue.textContent = gameSelect.selectedOptions[0].textContent;
+  for (const option of gamePickerOptions) {
+    option.setAttribute("aria-checked", String(option.dataset.game === gameSelect.value));
+  }
+}
+
+function setGamePickerOpen(open, focusIndex) {
+  gamePickerButton.setAttribute("aria-expanded", String(open));
+  gamePickerMenu.inert = !open;
+  gamePickerMenu.classList.toggle("game-picker__menu--open", open);
+  if (open) {
+    const selectedIndex = gamePickerOptions.findIndex((option) => option.dataset.game === gameSelect.value);
+    gamePickerOptions[focusIndex ?? Math.max(0, selectedIndex)].focus();
+  }
+}
+
+gamePickerButton.addEventListener("click", () => {
+  setGamePickerOpen(gamePickerButton.getAttribute("aria-expanded") !== "true");
+});
+gamePickerButton.addEventListener("keydown", (event) => {
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    event.preventDefault();
+    setGamePickerOpen(true, event.key === "ArrowDown" ? 0 : gamePickerOptions.length - 1);
+  }
+});
+
+// Elegir una opción reutiliza el evento de cambio existente.
+for (const option of gamePickerOptions) {
+  option.addEventListener("click", () => {
+    const changed = gameSelect.value !== option.dataset.game;
+    gameSelect.value = option.dataset.game;
+    syncGamePicker();
+    setGamePickerOpen(false);
+    gamePickerButton.focus();
+    if (changed) gameSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+
+// Flechas, Inicio y Fin recorren las opciones; Escape cierra.
+gamePickerMenu.addEventListener("keydown", (event) => {
+  const index = gamePickerOptions.indexOf(document.activeElement);
+  let nextIndex;
+  if (event.key === "ArrowDown") nextIndex = (index + 1) % gamePickerOptions.length;
+  if (event.key === "ArrowUp") nextIndex = (index - 1 + gamePickerOptions.length) % gamePickerOptions.length;
+  if (event.key === "Home") nextIndex = 0;
+  if (event.key === "End") nextIndex = gamePickerOptions.length - 1;
+  if (nextIndex !== undefined) {
+    event.preventDefault();
+    gamePickerOptions[nextIndex].focus();
+  }
+  if (event.key === "Escape" || event.key === "Tab") {
+    if (event.key === "Escape") event.preventDefault();
+    gamePickerButton.focus();
+    setGamePickerOpen(false);
+  }
+});
+
+// Cierra al pulsar fuera o mover el foco a otro control.
+document.addEventListener("click", (event) => {
+  if (!gamePicker.contains(event.target)) setGamePickerOpen(false);
+});
+gamePicker.addEventListener("focusout", (event) => {
+  if (!gamePicker.contains(event.relatedTarget)) setGamePickerOpen(false);
+});
+gameSelect.addEventListener("change", syncGamePicker);
+syncGamePicker();
+
 carFilter.addEventListener("input", filterCars);
 gameSelect.addEventListener("change", () => {
   const selectedGame = gameSelect.selectedOptions[0];
@@ -134,6 +209,15 @@ function getGameEdition(gameId) {
 
 function renderCars(carsToRender) {
   const cards = carsToRender.map(createCarCard);
+  // Escalona la entrada con un retraso máximo de 120 ms.
+  cards.forEach((card, index) => {
+    card.classList.add("car-card--entering");
+    card.style.setProperty("--card-enter-delay", `${Math.min(index * 18, 120)}ms`);
+    card.addEventListener("animationend", () => {
+      card.classList.remove("car-card--entering");
+      card.style.removeProperty("--card-enter-delay");
+    }, { once: true });
+  });
   carList.replaceChildren(...cards);
   carCount.textContent = `${carsToRender.length} ${carsToRender.length === 1 ? "coche" : "coches"}`;
 

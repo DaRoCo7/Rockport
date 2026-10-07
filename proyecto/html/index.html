@@ -50,14 +50,25 @@
         </div>
 
         <div class="garage-controls">
-          <label class="game-picker">
-            <span>ELIGE JUEGO</span>
-            <select id="game-select" aria-label="Seleccionar juego">
+          <div class="game-picker">
+            <span id="game-picker-label">ELIGE JUEGO</span>
+            <!-- El select conserva los identificadores y la lógica de cambio. -->
+            <select id="game-select" aria-label="Seleccionar juego" hidden>
               <option value="most-wanted-2005">Most Wanted (2005)</option>
               <option value="carbon">Carbon</option>
               <option value="underground-2">Underground 2</option>
             </select>
-          </label>
+            <!-- Menú personalizado accesible con ratón y teclado. -->
+            <button id="game-picker-button" class="game-picker__button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="game-picker-menu" aria-labelledby="game-picker-label game-picker-value">
+              <span id="game-picker-value">Most Wanted (2005)</span>
+              <span class="game-picker__arrow" aria-hidden="true">▾</span>
+            </button>
+            <div id="game-picker-menu" class="game-picker__menu" role="menu" aria-labelledby="game-picker-label" inert>
+              <button class="game-picker__option" type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-game="most-wanted-2005">Most Wanted (2005)</button>
+              <button class="game-picker__option" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-game="carbon">Carbon</button>
+              <button class="game-picker__option" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-game="underground-2">Underground 2</button>
+            </div>
+          </div>
 
           <label class="filter">
             <span class="visually-hidden">Filtrar coches por nombre o marca</span>
