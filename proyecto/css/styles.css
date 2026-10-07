@@ -344,6 +344,40 @@ body:is(.game-most-wanted, .game-carbon, .game-underground) .hero::after {
   padding: 0 24px 70px;
 }
 
+/* Capa transparente para mantener el separador sin resplandor. */
+.page-content::before {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  width: 100%;
+  height: 32px;
+  transform: translateX(-50%);
+  background: none;
+  content: "";
+  pointer-events: none;
+}
+
+/* Vinilo deportivo superpuesto: no añade espacio entre secciones. */
+.page-content::after {
+  position: absolute;
+  top: -7px;
+  left: 24px;
+  right: 24px;
+  height: 16px;
+  /* Pieza inclinada larga, línea de 1 px y cuatro franjas separadas. */
+  background:
+    linear-gradient(120deg, transparent 6px, rgb(242 203 36 / 42%) 6px calc(100% - 6px), transparent calc(100% - 6px)) left center / min(112px, 28%) 10px no-repeat,
+    linear-gradient(90deg, rgb(242 203 36 / 32%), rgb(242 203 36 / 20%)) left min(106px, 26%) center / calc(100% - min(106px, 26%) - 116px) 1px no-repeat,
+    linear-gradient(120deg, transparent 7px, rgb(242 203 36 / 42%) 7px 14px, transparent 14px) right 4px center / 24px 16px no-repeat,
+    linear-gradient(120deg, transparent 7px, rgb(242 203 36 / 42%) 7px 14px, transparent 14px) right 32px center / 24px 16px no-repeat,
+    linear-gradient(120deg, transparent 7px, rgb(242 203 36 / 42%) 7px 14px, transparent 14px) right 60px center / 24px 16px no-repeat,
+    linear-gradient(120deg, transparent 7px, rgb(242 203 36 / 42%) 7px 14px, transparent 14px) right 88px center / 24px 16px no-repeat;
+  /* Desvanece suavemente el remate sin perder las franjas. */
+  mask-image: linear-gradient(90deg, #000 0%, #000 75%, rgb(0 0 0 / 85%) 99%, transparent);
+  content: "";
+  pointer-events: none;
+}
+
 .garage-section {
   padding-top: 38px;
 }
