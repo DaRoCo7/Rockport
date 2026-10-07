@@ -5,6 +5,7 @@ const carCount = document.querySelector("#car-count");
 const carFilter = document.querySelector("#car-filter");
 const gameSelect = document.querySelector("#game-select");
 const gameEdition = document.querySelector("#game-edition");
+const heroCity = document.querySelector("#hero-city");
 const statusMessage = document.querySelector("#status-message");
 const carDialog = document.querySelector("#car-dialog");
 const dialogContent = document.querySelector("#dialog-content");
@@ -15,7 +16,7 @@ let cars = [];
 carFilter.addEventListener("input", filterCars);
 gameSelect.addEventListener("change", () => {
   const selectedGame = gameSelect.selectedOptions[0];
-  gameEdition.textContent = getGameEdition(gameSelect.value);
+  updateHero(gameSelect.value);
   document.querySelector("#garage-title").textContent = `Coches de ${selectedGame.textContent}`;
   carFilter.value = "";
   loadCars(gameSelect.value);
@@ -23,7 +24,19 @@ gameSelect.addEventListener("change", () => {
 closeDialogButton.addEventListener("click", () => carDialog.close());
 carDialog.addEventListener("click", closeDialogFromBackdrop);
 
+updateHero(gameSelect.value);
 loadCars(gameSelect.value);
+
+function updateHero(gameId) {
+  const cities = {
+    "most-wanted-2005": "Rockport",
+    carbon: "Palmont City",
+    "underground-2": "Bayview"
+  };
+
+  gameEdition.textContent = getGameEdition(gameId);
+  heroCity.textContent = `de ${cities[gameId] || "Rockport"}.`;
+}
 
 async function loadCars(gameId) {
   cars = [];

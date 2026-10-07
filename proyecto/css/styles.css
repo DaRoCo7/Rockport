@@ -28,7 +28,7 @@ body {
   position: relative;
   min-height: 520px;
   overflow: hidden;
-  padding: 24px max(24px, calc((100vw - 1160px) / 2)) 76px;
+  padding: 24px max(24px, calc((100vw - 1720px) / 2)) 76px;
   background:
     linear-gradient(90deg, #111214 0%, rgb(17 18 20 / 94%) 32%, rgb(17 18 20 / 50%) 68%, rgb(17 18 20 / 75%) 100%),
     radial-gradient(ellipse at 76% 72%, #59491c 0%, #29251d 27%, #17181a 66%);
@@ -53,7 +53,7 @@ body {
 .footer {
   position: relative;
   z-index: 1;
-  width: min(1160px, 100%);
+  width: min(1720px, 100%);
   margin: 0 auto;
 }
 
@@ -175,7 +175,7 @@ body {
 }
 
 .garage-section {
-  padding-top: 53px;
+  padding-top: 38px;
 }
 
 .section-heading {
@@ -313,27 +313,28 @@ h2 {
   min-width: 0;
   overflow: hidden;
   padding: 0;
-  border: 1px solid #303135;
+  border: 1px solid #3a3b3f;
   color: inherit;
   background: var(--panel);
   cursor: pointer;
   font: inherit;
   text-align: left;
-  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
+  transition: border-color 240ms ease, transform 240ms ease, box-shadow 240ms ease;
 }
 
 .car-card:hover,
 .car-card:focus-visible {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   border-color: var(--accent);
   outline: none;
-  box-shadow: 0 10px 28px rgb(0 0 0 / 30%);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 32%);
 }
 
 .car-card__image-wrap {
   position: relative;
   display: grid;
-  height: 170px;
+  height: 190px;
   place-items: center;
   overflow: hidden;
   background: linear-gradient(145deg, #303033, #1a1b1e);
@@ -342,7 +343,7 @@ h2 {
 .car-card__image-wrap::after {
   position: absolute;
   inset: 50% 0 0;
-  background: linear-gradient(transparent, rgb(0 0 0 / 35%));
+  background: linear-gradient(transparent, rgb(0 0 0 / 22%));
   content: "";
   pointer-events: none;
 }
@@ -358,11 +359,12 @@ h2 {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 250ms ease;
+  transition: transform 320ms ease;
 }
 
-.car-card:hover .car-card__image {
-  transform: scale(1.04);
+.car-card:hover .car-card__image,
+.car-card:focus-visible .car-card__image {
+  transform: scale(1.025);
 }
 
 .car-card__caption {
@@ -375,8 +377,10 @@ h2 {
 
 .car-card__title {
   overflow: hidden;
-  font-size: 0.94rem;
-  font-weight: 800;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 850;
+  line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -386,9 +390,11 @@ h2 {
   font-size: 0.64rem;
   font-weight: 750;
   letter-spacing: 0.13em;
+  transition: color 240ms ease;
 }
 
-.car-card:hover .car-card__action {
+.car-card:hover .car-card__action,
+.car-card:focus-visible .car-card__action {
   color: var(--accent);
 }
 
