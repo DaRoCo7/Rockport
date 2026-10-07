@@ -10,8 +10,13 @@ const statusMessage = document.querySelector("#status-message");
 const carDialog = document.querySelector("#car-dialog");
 const dialogContent = document.querySelector("#dialog-content");
 const closeDialogButton = document.querySelector("#close-dialog");
+// Elementos de la pantalla de carga existente.
+const garageLoader = document.querySelector("#garage-loader");
+const garageLoaderTitle = garageLoader.querySelector(".garage-loader__title");
 
 let cars = [];
+// Guarda la posición del fondo para recuperarla al cerrar.
+let dialogScrollPosition = 0;
 
 carFilter.addEventListener("input", filterCars);
 gameSelect.addEventListener("change", () => {
@@ -19,15 +24,33 @@ gameSelect.addEventListener("change", () => {
   updateHero(gameSelect.value);
   document.querySelector("#garage-title").textContent = `Coches de ${selectedGame.textContent}`;
   carFilter.value = "";
+  // La carga del nuevo juego también muestra el loader.
   loadCars(gameSelect.value);
 });
 closeDialogButton.addEventListener("click", () => carDialog.close());
 carDialog.addEventListener("click", closeDialogFromBackdrop);
+// El evento close cubre botón, fondo y tecla Escape.
+carDialog.addEventListener("close", () => {
+  document.documentElement.classList.remove("car-dialog-open");
+  document.body.classList.remove("car-dialog-open");
+  document.body.style.removeProperty("--dialog-scroll-top");
+  window.scrollTo({ top: dialogScrollPosition, behavior: "instant" });
+});
 
 updateHero(gameSelect.value);
+// Primera carga del catálogo con el loader visible.
 loadCars(gameSelect.value);
 
 function updateHero(gameId) {
+  // Activa solo la ambientación del juego seleccionado.
+  const gameClasses = {
+    "most-wanted-2005": "game-most-wanted",
+    carbon: "game-carbon",
+    "underground-2": "game-underground"
+  };
+  document.body.classList.remove(...Object.values(gameClasses));
+  document.body.classList.add(gameClasses[gameId] || "game-most-wanted");
+
   const cities = {
     "most-wanted-2005": "Rockport",
     carbon: "Palmont City",
@@ -39,12 +62,40 @@ function updateHero(gameId) {
 }
 
 async function loadCars(gameId) {
+  // Cada juego tiene su propio nombre de garaje.
+  const garageTitles = {
+    "most-wanted-2005": "ROCKPORT GARAGE",
+    carbon: "PALMONT CITY GARAGE",
+    "underground-2": "BAYVIEW GARAGE"
+  };
+  garageLoaderTitle.textContent = garageTitles[gameId] || "ROCKPORT GARAGE";
+  // Muestra el loader sin esperar a la transición de salida.
+  garageLoader.style.transition = "none";
+  garageLoader.classList.remove("garage-loader--finished");
+  garageLoader.removeAttribute("aria-hidden");
+  document.body.classList.add("garage-loading");
+  // Aplica el estado visible antes de recuperar la transición.
+  void garageLoader.offsetWidth;
+  garageLoader.style.removeProperty("transition");
+
+  // Reinicia las animaciones de entrada y de la barra.
+  for (const animation of garageLoader.getAnimations({ subtree: true })) {
+    if (animation instanceof CSSAnimation) {
+      animation.cancel();
+      animation.play();
+    }
+  }
+
   cars = [];
   carList.replaceChildren();
   carCount.textContent = "";
   showStatus("Cargando los coches del juego...");
 
   try {
+    // Deja que el navegador dibuje el loader antes de pedir el catálogo.
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
     const parameters = new URLSearchParams({ game: gameId });
     const response = await fetch(`/api/cars?${parameters}`);
     const payload = await response.json();
@@ -63,6 +114,11 @@ async function loadCars(gameId) {
   } catch (error) {
     console.error("Error al cargar el catálogo:", error);
     showStatus(error.message, true);
+  } finally {
+    // Oculta el loader al terminar, incluso si la carga falla.
+    garageLoader.classList.add("garage-loader--finished");
+    garageLoader.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("garage-loading");
   }
 }
 
@@ -143,6 +199,12 @@ function filterCars() {
 async function openCarDetails(car) {
   dialogContent.replaceChildren(createLoadingDetails(car));
   carDialog.showModal();
+  // Bloquea el fondo sin perder su posición actual.
+  dialogScrollPosition = window.scrollY;
+  document.body.style.setProperty("--dialog-scroll-top", `-${dialogScrollPosition}px`);
+  document.documentElement.classList.add("car-dialog-open");
+  document.body.classList.add("car-dialog-open");
+  dialogContent.scrollTop = 0;
 
   try {
     const response = await fetch(`/api/cars/${encodeURIComponent(car.id)}`);

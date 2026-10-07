@@ -8,7 +8,16 @@
     <link rel="stylesheet" href="/css/styles.css">
     <script src="/js/script.js" defer></script>
   </head>
-  <body>
+  <body class="garage-loading">
+    <!-- Pantalla de carga: nombre del garaje, mensaje y barra animada. -->
+    <div id="garage-loader" class="garage-loader" role="status" aria-live="polite">
+      <div class="garage-loader__content">
+        <p class="garage-loader__title">ROCKPORT GARAGE</p>
+        <p class="garage-loader__message">CONNECTING TO GARAGE...</p>
+        <!-- Barra decorativa; el mensaje anuncia la carga. -->
+        <div class="garage-loader__bar" aria-hidden="true"></div>
+      </div>
+    </div>
     <header class="hero">
       <div class="hero__topline">
         <a class="brand-mark" href="/" aria-label="Most Wanted Garage, inicio">

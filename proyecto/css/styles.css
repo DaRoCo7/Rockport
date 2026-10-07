@@ -24,6 +24,117 @@ body {
   margin: 0;
 }
 
+/* Evita desplazar la página durante la carga. */
+body.garage-loading {
+  overflow: hidden;
+}
+
+/* Cubre la pantalla y centra el contenido. */
+.garage-loader {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    repeating-linear-gradient(-18deg, transparent 0 42px, rgb(242 203 36 / 3%) 42px 44px),
+    radial-gradient(ellipse at center, #302b19, #101113 70%);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 500ms ease, visibility 0s linear 500ms;
+}
+
+/* Desvanece el loader antes de ocultarlo. */
+.garage-loader--finished {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.garage-loader__content {
+  width: min(480px, 100%);
+  text-align: center;
+}
+
+/* Entrada rápida: título, mensaje y barra, en ese orden. */
+.garage-loader__title {
+  margin: 0 0 20px;
+  color: var(--accent);
+  font-size: clamp(2.4rem, 8vw, 4rem);
+  font-style: italic;
+  font-weight: 950;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  text-shadow: 3px 3px 0 #000;
+  animation: garage-text-enter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.garage-loader__message {
+  margin: 0 0 24px;
+  color: #d5d5d5;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  animation: garage-text-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+.garage-loader__bar {
+  height: 7px;
+  overflow: hidden;
+  background: #343126;
+  transform: skew(-15deg);
+  animation: garage-bar-enter 180ms ease-out 240ms both;
+}
+
+/* Franja amarilla que se mueve mientras carga. */
+.garage-loader__bar::after {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--accent);
+  box-shadow: 0 0 16px rgb(242 203 36 / 60%);
+  content: "";
+  animation: garage-connecting 1.2s ease-in-out infinite;
+}
+
+/* Los textos suben suavemente mientras aparecen. */
+@keyframes garage-text-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* La barra aparece con un pequeño cambio de tamaño. */
+@keyframes garage-bar-enter {
+  from { opacity: 0; transform: skew(-15deg) scaleX(0.94); }
+  to { opacity: 1; transform: skew(-15deg) scaleX(1); }
+}
+
+/* Repite el recorrido del indicador amarillo. */
+@keyframes garage-connecting {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(350%); }
+}
+
+/* Respeta la preferencia de reducir el movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  .garage-loader__title,
+  .garage-loader__message,
+  .garage-loader__bar {
+    animation: none;
+  }
+
+  .garage-loader {
+    transition-duration: 0s;
+    transition-delay: 0s;
+  }
+
+  .garage-loader__bar::after {
+    width: 100%;
+    animation: none;
+  }
+}
+
 .hero {
   position: relative;
   min-height: 520px;
@@ -45,6 +156,48 @@ body {
   content: "";
   box-shadow: 0 0 0 35px rgb(242 203 36 / 3%), 0 0 0 75px rgb(242 203 36 / 2%);
   pointer-events: none;
+}
+
+/* Rockport: luz cálida y tonos de asfalto. */
+body.game-most-wanted {
+  --ambient-light: 190 151 49;
+  --ambient-hero: #59491c;
+  --ambient-shade: #29251d;
+  --ambient-position: 76% 72%;
+}
+
+/* Palmont City: iluminación nocturna azul. */
+body.game-carbon {
+  --ambient-light: 80 140 192;
+  --ambient-hero: #243e58;
+  --ambient-shade: #1c2530;
+  --ambient-position: 82% 48%;
+}
+
+/* Bayview: reflejos urbanos turquesa. */
+body.game-underground {
+  --ambient-light: 65 171 153;
+  --ambient-hero: #245048;
+  --ambient-shade: #1c2c2b;
+  --ambient-position: 70% 80%;
+}
+
+/* Matices suaves sin cambiar el amarillo ni los textos. */
+body:is(.game-most-wanted, .game-carbon, .game-underground) {
+  background:
+    radial-gradient(ellipse at 90% 620px, rgb(var(--ambient-light) / 6%), transparent 65%),
+    #101113;
+}
+
+body:is(.game-most-wanted, .game-carbon, .game-underground) .hero {
+  background:
+    linear-gradient(90deg, #111214 0%, rgb(17 18 20 / 94%) 32%, rgb(17 18 20 / 50%) 68%, rgb(17 18 20 / 75%) 100%),
+    radial-gradient(ellipse at var(--ambient-position), var(--ambient-hero) 0%, var(--ambient-shade) 27%, #17181a 66%);
+}
+
+body:is(.game-most-wanted, .game-carbon, .game-underground) .hero::after {
+  border-color: rgb(var(--ambient-light) / 18%);
+  box-shadow: 0 0 0 35px rgb(var(--ambient-light) / 4%), 0 0 0 75px rgb(var(--ambient-light) / 3%);
 }
 
 .hero__topline,
@@ -217,9 +370,10 @@ h2 {
   gap: 7px;
 }
 
+/* El selector destaca como control principal del garaje. */
 .game-picker > span {
-  color: #b8b7ad;
-  font-size: 0.63rem;
+  color: var(--accent);
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.12em;
 }
@@ -229,16 +383,28 @@ h2 {
   height: 44px;
   padding: 0 34px 0 12px;
   border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
   border-radius: 0;
   outline: 0;
   color: #f4f5f6;
   background: #18191b;
   font: inherit;
   font-size: 0.84rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
 }
 
+.game-picker select:hover,
 .game-picker select:focus {
   border-color: var(--accent);
+  background: #25241d;
+}
+
+/* Foco visible para navegar con el teclado. */
+.game-picker select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .game-picker option {
@@ -246,6 +412,7 @@ h2 {
   background: #18191b;
 }
 
+/* Buscador recto y oscuro, integrado con el selector. */
 .filter {
   display: flex;
   width: min(400px, 100%);
@@ -256,21 +423,31 @@ h2 {
   margin-top: 0;
   padding: 0 13px;
   border: 1px solid var(--line);
-  background: #18191b;
+  border-radius: 0;
+  background: linear-gradient(110deg, #222326, #18191b);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.filter:hover,
+.filter:focus-within {
+  border-color: var(--accent);
 }
 
 .filter:focus-within {
-  border-color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .filter__icon {
   color: var(--accent);
   font-size: 1.5rem;
   line-height: 1;
+  padding-right: 10px;
+  border-right: 1px solid var(--line);
 }
 
 .filter input {
   width: 100%;
+  min-width: 0;
   border: 0;
   outline: 0;
   color: #f4f5f6;
@@ -280,7 +457,7 @@ h2 {
 }
 
 .filter input::placeholder {
-  color: #797b7e;
+  color: #a4a6a8;
 }
 
 .status-message {
@@ -398,17 +575,64 @@ h2 {
   color: var(--accent);
 }
 
+/* Fija el fondo mientras la ficha está abierta. */
+html.car-dialog-open {
+  overflow: hidden;
+}
+
+body.car-dialog-open {
+  position: fixed;
+  top: var(--dialog-scroll-top);
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Ficha horizontal con espacio reservado para cerrar. */
 .car-dialog {
   position: fixed;
-  width: min(850px, calc(100% - 32px));
-  max-width: 850px;
-  max-height: min(90vh, 820px);
-  overflow: auto;
-  padding: 0;
-  border: 1px solid #4a4942;
+  width: min(1280px, calc(100% - 32px));
+  max-width: 1280px;
+  max-height: 90vh;
+  overflow: hidden;
+  padding: 54px 0 0;
+  border: 1px solid rgb(var(--ambient-light, 190 151 49) / 35%);
   color: #f4f5f6;
-  background: #191a1c;
+  background: radial-gradient(ellipse at top right, rgb(var(--ambient-light, 190 151 49) / 12%), transparent 65%), #191a1c;
   box-shadow: 0 24px 100px rgb(0 0 0 / 75%);
+}
+
+/* Solo el contenido interior puede desplazarse. */
+#dialog-content {
+  max-height: calc(90vh - 56px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* Imagen a la izquierda y especificaciones a la derecha. */
+.detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.detail:has(.detail__image[hidden]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Entrada breve al abrir la ficha. */
+.car-dialog[open] {
+  animation: car-dialog-enter 240ms ease-out both;
+}
+
+@keyframes car-dialog-enter {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .car-dialog[open] {
+    animation: none;
+  }
 }
 
 .car-dialog::backdrop {
@@ -416,35 +640,47 @@ h2 {
   backdrop-filter: blur(4px);
 }
 
+/* Cierre cuadrado con foco visible para el teclado. */
 .dialog-close {
-  position: sticky;
+  position: absolute;
   z-index: 2;
   top: 12px;
-  float: right;
-  width: 38px;
-  height: 38px;
-  margin: 12px 12px -50px 0;
-  border: 1px solid rgb(255 255 255 / 45%);
-  border-radius: 50%;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  border: 1px solid #45464a;
+  border-radius: 0;
   color: #fff;
-  background: rgb(15 15 16 / 75%);
+  background: #202124;
   cursor: pointer;
   font: inherit;
   font-size: 1.5rem;
   line-height: 1;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
 .dialog-close:hover {
   color: #17181a;
   background: var(--accent);
+  border-color: var(--accent);
 }
 
+.dialog-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Imagen protagonista, sin recortar el coche. */
 .detail__image {
   display: block;
   width: 100%;
-  max-height: 360px;
-  object-fit: cover;
-  background: #242528;
+  height: 100%;
+  min-height: 340px;
+  max-height: 600px;
+  object-fit: contain;
+  border-right: 2px solid var(--accent);
+  background: radial-gradient(ellipse at center, rgb(var(--ambient-light, 190 151 49) / 16%), transparent 75%), #151619;
 }
 
 .detail__image[hidden] {
@@ -452,40 +688,49 @@ h2 {
 }
 
 .detail__content {
-  padding: 26px clamp(20px, 5vw, 38px) 32px;
+  min-width: 0;
+  padding: 20px 24px 24px;
 }
 
+/* Nombre destacado como en una selección de coche. */
 .detail__title {
-  margin: 8px 0 22px;
-  font-size: clamp(1.65rem, 5vw, 2.6rem);
+  margin: 8px 0 18px;
+  color: var(--accent);
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-weight: 950;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
 }
 
+/* Cada dato tiene su propio bloque y una marca amarilla. */
 .detail__facts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   margin: 0;
-  border: 1px solid var(--line);
-  background: var(--line);
 }
 
 .detail__fact {
   min-width: 0;
-  padding: 13px 14px;
-  background: #202124;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  background: rgb(32 33 36 / 88%);
 }
 
 .detail__fact dt {
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   color: #aaa99e;
   font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .detail__fact dd {
   overflow-wrap: anywhere;
   margin: 0;
   color: #f5f4ec;
-  font-size: 0.91rem;
+  font-size: 1rem;
   font-weight: 750;
 }
 
@@ -544,6 +789,32 @@ h2 {
 }
 
 @media (max-width: 680px) {
+  /* En móvil la imagen queda encima de los datos. */
+  .detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detail__image {
+    height: clamp(180px, 50vw, 300px);
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  /* Ficha compacta y datos en dos columnas en móvil. */
+  .detail__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .detail__fact {
+    padding: 12px;
+  }
+
+  .detail__content {
+    padding: 24px 20px 28px;
+  }
+
   .hero {
     min-height: 480px;
     padding-right: 20px;
