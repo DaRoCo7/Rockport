@@ -145,6 +145,23 @@ body.garage-loading {
     radial-gradient(ellipse at 76% 72%, #59491c 0%, #29251d 27%, #17181a 66%);
 }
 
+/* Textura fina y marcas técnicas detrás de los textos. */
+.hero::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 3%) 0.5px, transparent 0.8px) 0 0 / 3px 5px,
+    radial-gradient(circle, rgb(0 0 0 / 10%) 0.5px, transparent 0.8px) 1px 2px / 5px 3px,
+    repeating-linear-gradient(90deg, rgb(var(--ambient-light, 190 151 49) / 16%) 0 1px, transparent 1px 20px) right 7% top 110px / 180px 6px no-repeat,
+    linear-gradient(rgb(var(--ambient-light, 190 151 49) / 12%), rgb(var(--ambient-light, 190 151 49) / 12%)) right 7% top 134px / 100px 1px no-repeat,
+    linear-gradient(115deg, transparent 58%, rgb(var(--ambient-light, 190 151 49) / 5%) 58.1%, transparent 75%),
+    linear-gradient(0deg, rgb(0 0 0 / 24%), transparent 35%);
+}
+
+/* Detalles estáticos: sin movimiento incluso con movimiento reducido. */
 .hero::after {
   position: absolute;
   right: -7%;
