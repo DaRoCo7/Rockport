@@ -1,0 +1,12 @@
+{
+  "name": "coches-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Catálogo fan de coches de Need for Speed: Most Wanted (2005)",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

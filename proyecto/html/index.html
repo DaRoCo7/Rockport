@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Catálogo de coches de carreras de Need for Speed: Most Wanted (2005).">
+    <title>Most Wanted — Garage</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/script.js" defer></script>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__topline">
+        <a class="brand-mark" href="/" aria-label="Most Wanted Garage, inicio">
+          <span class="brand-mark__icon" aria-hidden="true">MW</span>
+          <span class="brand-mark__text">MOST WANTED<br><strong>GARAGE</strong></span>
+        </a>
+        <span class="hero__edition">ROCKPORT · 2005</span>
+      </div>
+
+      <div class="hero__content">
+        <p class="eyebrow">ELIGE TU MÁQUINA</p>
+        <h1>El garaje<br><span>de Rockport.</span></h1>
+        <p class="hero__description">
+          Los coches de carrera de Need for Speed: Most Wanted (2005), reunidos en un solo sitio.
+          Elige uno para ver su ficha.
+        </p>
+        <a class="hero__button" href="#garage">EXPLORAR COCHES <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="hero__watermark" aria-hidden="true">MOST<br>WANTED</div>
+    </header>
+
+    <main id="garage" class="page-content">
+      <section class="garage-section" aria-labelledby="garage-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow eyebrow--dark">TU PRÓXIMA CARRERA EMPIEZA AQUÍ</p>
+            <h2 id="garage-title">Coches del juego</h2>
+          </div>
+          <p id="car-count" class="car-count" aria-live="polite"></p>
+        </div>
+
+        <label class="filter">
+          <span class="visually-hidden">Filtrar coches por nombre o marca</span>
+          <span class="filter__icon" aria-hidden="true">⌕</span>
+          <input id="car-filter" type="search" placeholder="Filtrar por coche o marca...">
+        </label>
+
+        <p id="status-message" class="status-message" role="status">
+          Cargando el garaje de Rockport...
+        </p>
+        <div id="car-list" class="car-grid"></div>
+      </section>
+    </main>
+
+    <dialog id="car-dialog" class="car-dialog" aria-labelledby="dialog-title">
+      <button id="close-dialog" class="dialog-close" type="button" aria-label="Cerrar ficha">×</button>
+      <div id="dialog-content"></div>
+    </dialog>
+
+    <footer class="footer">
+      <p>Página fan educativa · Datos e imágenes de la <a href="https://nfs.fandom.com/wiki/Need_for_Speed_Wiki" target="_blank" rel="noopener noreferrer">Need for Speed Wiki</a> (Fandom)</p>
+      <p>Creado por fans; no está afiliado a Electronic Arts.</p>
+    </footer>
+  </body>
+</html>
