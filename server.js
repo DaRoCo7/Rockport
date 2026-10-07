@@ -4,7 +4,21 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 const wikiApi = "https://nfs.fandom.com/api.php";
-const playableCarsCategory = "Category:Stock (Most Wanted (2005))";
+const games = {
+  "most-wanted-2005": {
+    label: "Most Wanted (2005)",
+    catalogCategory: "Category:Stock (Most Wanted (2005))"
+  },
+  carbon: {
+    label: "Carbon",
+    catalogCategory: "Category:Stock (Carbon)"
+  },
+  "underground-2": {
+    label: "Underground 2",
+    catalogCategory: "Category:Vehicles (Underground 2)",
+    excludedCategories: ["Category:Traffic Vehicles (Underground 2)"]
+  }
+};
 
 app.use("/css", express.static(path.join(__dirname, "proyecto", "css")));
 app.use("/js", express.static(path.join(__dirname, "proyecto", "js")));
@@ -13,11 +27,19 @@ app.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "proyecto", "html", "index.html"));
 });
 
-app.get("/api/cars", async (_req, res) => {
-  const parameters = new URLSearchParams({
+app.get("/api/cars", async (req, res) => {
+  const gameId = typeof req.query.game === "string" ? req.query.game : "most-wanted-2005";
+  const game = games[gameId];
+
+  if (!game) {
+    return res.status(400).json({ error: "El juego solicitado no está disponible." });
+  }
+
+  const catalogParameters = new URLSearchParams({
     action: "query",
     generator: "categorymembers",
-    gcmtitle: playableCarsCategory,
+    gcmtitle: game.catalogCategory,
+    gcmnamespace: "0",
     gcmlimit: "100",
     prop: "pageimages",
     piprop: "thumbnail",
@@ -26,18 +48,18 @@ app.get("/api/cars", async (_req, res) => {
   });
 
   try {
-    const response = await fetch(`${wikiApi}?${parameters}`);
-
-    if (!response.ok) {
-      console.error(`NFS Wiki catalog request failed with status ${response.status}.`);
-      return res.status(502).json({
-        error: "No se pudo cargar el catálogo de coches de la wiki."
-      });
-    }
-
-    const payload = await response.json();
-    const pages = Object.values(payload.query?.pages || {})
-      .filter((page) => page.ns === 0)
+    const excludedCategoryRequests = (game.excludedCategories || []).map((category) =>
+      getCategoryMembers(category)
+    );
+    const [catalogPayload, ...excludedMembers] = await Promise.all([
+      fetchWikiJson(catalogParameters),
+      ...excludedCategoryRequests
+    ]);
+    const excludedPageIds = new Set(
+      excludedMembers.flatMap((members) => members.map((page) => page.pageid))
+    );
+    const pages = Object.values(catalogPayload.query?.pages || {})
+      .filter((page) => page.ns === 0 && !excludedPageIds.has(page.pageid))
       .map((page) => ({
         id: page.pageid,
         title: page.title,
@@ -46,15 +68,15 @@ app.get("/api/cars", async (_req, res) => {
       .sort((first, second) => first.title.localeCompare(second.title, "es"));
 
     if (pages.length === 0) {
-      console.error("NFS Wiki returned no playable cars for the configured category.");
+      console.error(`NFS Wiki returned no cars for game ${gameId}.`);
       return res.status(502).json({
         error: "La wiki no ha devuelto coches para el catálogo."
       });
     }
 
-    return res.json(pages);
+    return res.json(pages.map((page) => ({ ...page, gameId, gameLabel: game.label })));
   } catch (error) {
-    console.error("Could not load the NFS Wiki catalog:", error);
+    console.error(`Could not load the NFS Wiki catalog for ${gameId}:`, error);
     return res.status(502).json({
       error: "No se pudo conectar con la wiki de Need for Speed."
     });
@@ -107,5 +129,28 @@ app.get("/api/cars/:pageId", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Página fan disponible en http://localhost:${port}`);
+  console.log(`Garaje Need for Speed disponible en http://localhost:${port}`);
 });
+
+async function fetchWikiJson(parameters) {
+  const response = await fetch(`${wikiApi}?${parameters}`);
+
+  if (!response.ok) {
+    throw new Error(`NFS Wiki responded with status ${response.status}.`);
+  }
+
+  return response.json();
+}
+
+async function getCategoryMembers(category) {
+  const parameters = new URLSearchParams({
+    action: "query",
+    list: "categorymembers",
+    cmtitle: category,
+    cmnamespace: "0",
+    cmlimit: "100",
+    format: "json"
+  });
+  const payload = await fetchWikiJson(parameters);
+  return payload.query?.categorymembers || [];
+}

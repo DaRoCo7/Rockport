@@ -1,6 +1,6 @@
-# Most Wanted Garage
+# Need for Speed Tuning Garage
 
-Página fan educativa con los 32 coches de carreras de la categoría `Stock (Most Wanted (2005))` de la Need for Speed Wiki. El catálogo muestra tarjetas con imágenes; al seleccionar una se carga su ficha.
+Página fan educativa con coches de carreras de Need for Speed: Most Wanted (2005), Carbon y Underground 2, cargados desde la Need for Speed Wiki. El garaje permite elegir un juego, filtrar coches por nombre y abrir la ficha de cada vehículo.
 
 ## Ejecutar
 
@@ -9,17 +9,21 @@ Página fan educativa con los 32 coches de carreras de la categoría `Stock (Mos
 3. Ejecuta `npm start`.
 4. Abre `http://localhost:3000`.
 
-No se necesita una clave API. El servidor Node.js sirve la página y consulta la API pública de MediaWiki de Fandom.
+No se necesita una clave API. El servidor Node.js sirve la página y consulta la API pública de MediaWiki de Fandom. Para Underground 2 se parte de la categoría de vehículos del juego y se excluye la categoría de vehículos de tráfico.
 
 ## Organización
 
-- `proyecto/html/index.html`: página principal del garaje, filtro y ventana de detalle.
+- `proyecto/html/index.html`: página principal del garaje, selector de juego, filtro y ventana de detalle.
 - `proyecto/css/styles.css`: presentación visual y adaptación a pantallas pequeñas.
-- `proyecto/js/script.js`: carga el catálogo, filtra coches y crea tarjetas y fichas.
-- `server.js`: sirve los archivos y consulta la wiki para el catálogo y las fichas de coches.
+- `proyecto/js/script.js`: carga el catálogo seleccionado, filtra coches y crea tarjetas y fichas.
+- `server.js`: sirve los archivos, consulta las categorías de cada juego y devuelve las fichas de coches.
 
-## Datos de las fichas
+## Categorías y datos de las fichas
 
-Las páginas de la categoría contienen una plantilla `InfoboxCar`. En las 32 fichas consultadas aparecen los campos `production`, `manufacturer`, `eng`, `disp`, `weight`, `bhp`, `torque`, `accel`, `top speed`, `transmission2` y `transmission`. El cliente lee esa plantilla y presenta esos valores cuando se abre una ficha.
+- Most Wanted (2005): `Stock (Most Wanted (2005))`.
+- Carbon: `Stock (Carbon)`.
+- Underground 2: `Vehicles (Underground 2)`, excluyendo `Traffic Vehicles (Underground 2)`.
+
+Las páginas de la wiki pueden incluir una plantilla `InfoboxCar`. La ficha presenta los valores disponibles de `production`, `manufacturer`, `eng`, `disp`, `weight`, `bhp`, `torque`, `accel`, `top speed`, `transmission2` y `transmission`. La cobertura puede variar entre coches y juegos.
 
 La wiki es comunitaria y no oficial; sus datos pueden cambiar. La página enlaza a la fuente original y no está afiliada a Electronic Arts.

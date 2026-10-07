@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Catálogo de coches de carreras de Need for Speed: Most Wanted (2005).">
-    <title>Most Wanted — Garage</title>
+    <meta name="description" content="Garaje de coches de carreras de Need for Speed: elige un juego y explora sus coches.">
+    <title>Need for Speed — Garage</title>
     <link rel="stylesheet" href="/css/styles.css">
     <script src="/js/script.js" defer></script>
   </head>
@@ -13,17 +13,17 @@
       <div class="hero__topline">
         <a class="brand-mark" href="/" aria-label="Most Wanted Garage, inicio">
           <span class="brand-mark__icon" aria-hidden="true">MW</span>
-          <span class="brand-mark__text">MOST WANTED<br><strong>GARAGE</strong></span>
+          <span class="brand-mark__text">NEED FOR SPEED<br><strong>TUNING GARAGE</strong></span>
         </a>
-        <span class="hero__edition">ROCKPORT · 2005</span>
+        <span id="game-edition" class="hero__edition">ROCKPORT · MOST WANTED 2005</span>
       </div>
 
       <div class="hero__content">
         <p class="eyebrow">ELIGE TU MÁQUINA</p>
         <h1>El garaje<br><span>de Rockport.</span></h1>
         <p class="hero__description">
-          Los coches de carrera de Need for Speed: Most Wanted (2005), reunidos en un solo sitio.
-          Elige uno para ver su ficha.
+          Los coches de carrera de la saga, reunidos en un solo garaje. Elige un juego y luego
+          selecciona un coche para ver su ficha.
         </p>
         <a class="hero__button" href="#garage">EXPLORAR COCHES <span aria-hidden="true">↓</span></a>
       </div>
@@ -40,11 +40,22 @@
           <p id="car-count" class="car-count" aria-live="polite"></p>
         </div>
 
-        <label class="filter">
-          <span class="visually-hidden">Filtrar coches por nombre o marca</span>
-          <span class="filter__icon" aria-hidden="true">⌕</span>
-          <input id="car-filter" type="search" placeholder="Filtrar por coche o marca...">
-        </label>
+        <div class="garage-controls">
+          <label class="game-picker">
+            <span>ELIGE JUEGO</span>
+            <select id="game-select" aria-label="Seleccionar juego">
+              <option value="most-wanted-2005">Most Wanted (2005)</option>
+              <option value="carbon">Carbon</option>
+              <option value="underground-2">Underground 2</option>
+            </select>
+          </label>
+
+          <label class="filter">
+            <span class="visually-hidden">Filtrar coches por nombre o marca</span>
+            <span class="filter__icon" aria-hidden="true">⌕</span>
+            <input id="car-filter" type="search" placeholder="Filtrar por coche o marca...">
+          </label>
+        </div>
 
         <p id="status-message" class="status-message" role="status">
           Cargando el garaje de Rockport...

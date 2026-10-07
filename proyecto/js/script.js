@@ -3,6 +3,8 @@
 const carList = document.querySelector("#car-list");
 const carCount = document.querySelector("#car-count");
 const carFilter = document.querySelector("#car-filter");
+const gameSelect = document.querySelector("#game-select");
+const gameEdition = document.querySelector("#game-edition");
 const statusMessage = document.querySelector("#status-message");
 const carDialog = document.querySelector("#car-dialog");
 const dialogContent = document.querySelector("#dialog-content");
@@ -11,16 +13,27 @@ const closeDialogButton = document.querySelector("#close-dialog");
 let cars = [];
 
 carFilter.addEventListener("input", filterCars);
+gameSelect.addEventListener("change", () => {
+  const selectedGame = gameSelect.selectedOptions[0];
+  gameEdition.textContent = getGameEdition(gameSelect.value);
+  document.querySelector("#garage-title").textContent = `Coches de ${selectedGame.textContent}`;
+  carFilter.value = "";
+  loadCars(gameSelect.value);
+});
 closeDialogButton.addEventListener("click", () => carDialog.close());
 carDialog.addEventListener("click", closeDialogFromBackdrop);
 
-loadCars();
+loadCars(gameSelect.value);
 
-async function loadCars() {
+async function loadCars(gameId) {
+  cars = [];
+  carList.replaceChildren();
+  carCount.textContent = "";
   showStatus("Cargando los coches del juego...");
 
   try {
-    const response = await fetch("/api/cars");
+    const parameters = new URLSearchParams({ game: gameId });
+    const response = await fetch(`/api/cars?${parameters}`);
     const payload = await response.json();
 
     if (!response.ok) {
@@ -38,6 +51,16 @@ async function loadCars() {
     console.error("Error al cargar el catálogo:", error);
     showStatus(error.message, true);
   }
+}
+
+function getGameEdition(gameId) {
+  const editions = {
+    "most-wanted-2005": "ROCKPORT · MOST WANTED 2005",
+    carbon: "PALMONT CITY · CARBON",
+    "underground-2": "BAYVIEW · UNDERGROUND 2"
+  };
+
+  return editions[gameId] || "NEED FOR SPEED · TUNING GARAGE";
 }
 
 function renderCars(carsToRender) {
@@ -180,7 +203,7 @@ function createCarDetails(car, details, source) {
 
   const gameLabel = document.createElement("p");
   gameLabel.className = "eyebrow";
-  gameLabel.textContent = "NEED FOR SPEED: MOST WANTED · 2005";
+  gameLabel.textContent = `NEED FOR SPEED: ${car.gameLabel}`;
 
   const title = document.createElement("h2");
   title.id = "dialog-title";
