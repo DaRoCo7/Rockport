@@ -6,6 +6,7 @@ const carFilter = document.querySelector("#car-filter");
 const gameSelect = document.querySelector("#game-select");
 const gameEdition = document.querySelector("#game-edition");
 const heroCity = document.querySelector("#hero-city");
+const heroWatermark = document.querySelector("#hero-watermark");
 const statusMessage = document.querySelector("#status-message");
 const carDialog = document.querySelector("#car-dialog");
 const dialogContent = document.querySelector("#dialog-content");
@@ -131,9 +132,15 @@ function updateHero(gameId) {
     carbon: "Palmont City",
     "underground-2": "Bayview"
   };
+  const watermarks = {
+    "most-wanted-2005": "MOST\nWANTED",
+    carbon: "CARBON",
+    "underground-2": "UNDERGROUND\n2"
+  };
 
   gameEdition.textContent = getGameEdition(gameId);
   heroCity.textContent = `de ${cities[gameId] || "Rockport"}.`;
+  heroWatermark.textContent = watermarks[gameId] || watermarks["most-wanted-2005"];
 }
 
 async function loadCars(gameId) {

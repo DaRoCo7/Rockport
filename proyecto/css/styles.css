@@ -6,6 +6,9 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --accent: #f2cb24;
+  --accent-rgb: 242 203 36;
+  --accent-hover: #ffe35a;
+  --accent-soft: #b6a43b;
   --muted: #a4a6a8;
   --panel: #1b1c1f;
   --line: #343539;
@@ -24,6 +27,27 @@ body {
   margin: 0;
 }
 
+body.game-most-wanted {
+  --accent: #f2cb24;
+  --accent-rgb: 242 203 36;
+  --accent-hover: #ffe35a;
+  --accent-soft: #b6a43b;
+}
+
+body.game-carbon {
+  --accent: #63b5f2;
+  --accent-rgb: 99 181 242;
+  --accent-hover: #9bd3ff;
+  --accent-soft: #82bde8;
+}
+
+body.game-underground {
+  --accent: #59d6b5;
+  --accent-rgb: 89 214 181;
+  --accent-hover: #91f0d7;
+  --accent-soft: #72d2b9;
+}
+
 /* Evita desplazar la página durante la carga. */
 body.garage-loading {
   overflow: hidden;
@@ -38,8 +62,8 @@ body.garage-loading {
   place-items: center;
   padding: 24px;
   background:
-    repeating-linear-gradient(-18deg, transparent 0 42px, rgb(242 203 36 / 3%) 42px 44px),
-    radial-gradient(ellipse at center, #302b19, #101113 70%);
+    repeating-linear-gradient(-18deg, transparent 0 42px, rgb(var(--accent-rgb) / 3%) 42px 44px),
+    radial-gradient(ellipse at center, var(--ambient-shade, #302b19), #101113 70%);
   opacity: 1;
   visibility: visible;
   transition: opacity 500ms ease, visibility 0s linear 500ms;
@@ -82,18 +106,18 @@ body.garage-loading {
 .garage-loader__bar {
   height: 7px;
   overflow: hidden;
-  background: #343126;
+  background: rgb(var(--accent-rgb) / 16%);
   transform: skew(-15deg);
   animation: garage-bar-enter 180ms ease-out 240ms both;
 }
 
-/* Franja amarilla que se mueve mientras carga. */
+/* Franja de color temático que se mueve mientras carga. */
 .garage-loader__bar::after {
   display: block;
   width: 40%;
   height: 100%;
   background: var(--accent);
-  box-shadow: 0 0 16px rgb(242 203 36 / 60%);
+  box-shadow: 0 0 16px rgb(var(--accent-rgb) / 60%);
   content: "";
   animation: garage-connecting 1.2s ease-in-out infinite;
 }
@@ -168,10 +192,10 @@ body.garage-loading {
   bottom: -44%;
   width: min(700px, 70vw);
   aspect-ratio: 1;
-  border: 1px solid rgb(242 203 36 / 13%);
+  border: 1px solid rgb(var(--accent-rgb) / 13%);
   border-radius: 50%;
   content: "";
-  box-shadow: 0 0 0 35px rgb(242 203 36 / 3%), 0 0 0 75px rgb(242 203 36 / 2%);
+  box-shadow: 0 0 0 35px rgb(var(--accent-rgb) / 3%), 0 0 0 75px rgb(var(--accent-rgb) / 2%);
   pointer-events: none;
 }
 
@@ -323,7 +347,7 @@ body:is(.game-most-wanted, .game-carbon, .game-underground) .hero::after {
 
 .hero__button:hover {
   transform: translateY(-2px);
-  background: #ffe35a;
+  background: var(--accent-hover);
 }
 
 .hero__watermark {
@@ -338,6 +362,7 @@ body:is(.game-most-wanted, .game-carbon, .game-underground) .hero::after {
   line-height: 0.76;
   pointer-events: none;
   text-align: right;
+  white-space: pre-line;
 }
 
 .page-content {
@@ -366,12 +391,12 @@ body:is(.game-most-wanted, .game-carbon, .game-underground) .hero::after {
   height: 16px;
   /* Pieza inclinada larga, línea de 1 px y cuatro franjas separadas. */
   background:
-    linear-gradient(120deg, transparent 6px, rgb(242 203 36 / 42%) 6px calc(100% - 6px), transparent calc(100% - 6px)) left center / min(112px, 28%) 10px no-repeat,
-    linear-gradient(90deg, rgb(242 203 36 / 32%), rgb(242 203 36 / 20%)) left min(106px, 26%) center / calc(100% - min(106px, 26%) - 116px) 1px no-repeat,
-    linear-gradient(120deg, transparent 7px, rgb(242 203 36 / 42%) 7px 14px, transparent 14px) right 4px center / 24px 16px no-repeat,
-    linear-gradient(120deg, transparent 7px, rgb(242 203 36 / 42%) 7px 14px, transparent 14px) right 32px center / 24px 16px no-repeat,
-    linear-gradient(120deg, transparent 7px, rgb(242 203 36 / 42%) 7px 14px, transparent 14px) right 60px center / 24px 16px no-repeat,
-    linear-gradient(120deg, transparent 7px, rgb(242 203 36 / 42%) 7px 14px, transparent 14px) right 88px center / 24px 16px no-repeat;
+    linear-gradient(120deg, transparent 6px, rgb(var(--accent-rgb) / 42%) 6px calc(100% - 6px), transparent calc(100% - 6px)) left center / min(112px, 28%) 10px no-repeat,
+    linear-gradient(90deg, rgb(var(--accent-rgb) / 32%), rgb(var(--accent-rgb) / 20%)) left min(106px, 26%) center / calc(100% - min(106px, 26%) - 116px) 1px no-repeat,
+    linear-gradient(120deg, transparent 7px, rgb(var(--accent-rgb) / 42%) 7px 14px, transparent 14px) right 4px center / 24px 16px no-repeat,
+    linear-gradient(120deg, transparent 7px, rgb(var(--accent-rgb) / 42%) 7px 14px, transparent 14px) right 32px center / 24px 16px no-repeat,
+    linear-gradient(120deg, transparent 7px, rgb(var(--accent-rgb) / 42%) 7px 14px, transparent 14px) right 60px center / 24px 16px no-repeat,
+    linear-gradient(120deg, transparent 7px, rgb(var(--accent-rgb) / 42%) 7px 14px, transparent 14px) right 88px center / 24px 16px no-repeat;
   /* Desvanece suavemente el remate sin perder las franjas. */
   mask-image: linear-gradient(90deg, #000 0%, #000 75%, rgb(0 0 0 / 85%) 99%, transparent);
   content: "";
@@ -390,7 +415,7 @@ body:is(.game-most-wanted, .game-carbon, .game-underground) .hero::after {
 }
 
 .eyebrow--dark {
-  color: #b6a43b;
+  color: var(--accent-soft);
 }
 
 h2 {
@@ -447,7 +472,7 @@ h2 {
   font-size: 0.9rem;
   font-weight: 750;
   cursor: pointer;
-  box-shadow: inset 0 -2px 0 rgb(242 203 36 / 12%);
+  box-shadow: inset 0 -2px 0 rgb(var(--accent-rgb) / 12%);
   transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
@@ -717,7 +742,7 @@ h2 {
   transform: translateY(-3px);
   border-color: var(--accent);
   outline: none;
-  box-shadow: 0 8px 20px rgb(0 0 0 / 32%), 0 0 0 1px rgb(242 203 36 / 45%);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 32%), 0 0 0 1px rgb(var(--accent-rgb) / 45%);
 }
 
 .car-card__image-wrap {

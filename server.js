@@ -7,11 +7,19 @@ const wikiApi = "https://nfs.fandom.com/api.php";
 const games = {
   "most-wanted-2005": {
     label: "Most Wanted (2005)",
-    catalogCategory: "Category:Stock (Most Wanted (2005))"
+    catalogCategories: [
+      "Category:Stock (Most Wanted (2005))",
+      "Category:Blacklist Vehicles (Most Wanted (2005))",
+      "Category:Bonus (Most Wanted (2005))"
+    ]
   },
   carbon: {
     label: "Carbon",
-    catalogCategory: "Category:Stock (Carbon)"
+    catalogCategories: [
+      "Category:Stock (Carbon)",
+      "Category:Bonus (Carbon)",
+      "Category:Crew Boss Vehicles (Carbon)"
+    ]
   },
   "underground-2": {
     label: "Underground 2",
@@ -35,30 +43,39 @@ app.get("/api/cars", async (req, res) => {
     return res.status(400).json({ error: "El juego solicitado no está disponible." });
   }
 
-  const catalogParameters = new URLSearchParams({
-    action: "query",
-    generator: "categorymembers",
-    gcmtitle: game.catalogCategory,
-    gcmnamespace: "0",
-    gcmlimit: "100",
-    prop: "pageimages",
-    piprop: "thumbnail",
-    pithumbsize: "640",
-    format: "json"
-  });
+  const catalogCategories = game.catalogCategories || [game.catalogCategory];
 
   try {
     const excludedCategoryRequests = (game.excludedCategories || []).map((category) =>
       getCategoryMembers(category)
     );
-    const [catalogPayload, ...excludedMembers] = await Promise.all([
-      fetchWikiJson(catalogParameters),
+    const catalogRequests = catalogCategories.map((category) => {
+      const parameters = new URLSearchParams({
+        action: "query",
+        generator: "categorymembers",
+        gcmtitle: category,
+        gcmnamespace: "0",
+        gcmlimit: "100",
+        prop: "pageimages",
+        piprop: "thumbnail",
+        pithumbsize: "640",
+        format: "json"
+      });
+      return fetchWikiJson(parameters);
+    });
+    const [catalogPayloads, ...excludedMembers] = await Promise.all([
+      Promise.all(catalogRequests),
       ...excludedCategoryRequests
     ]);
     const excludedPageIds = new Set(
       excludedMembers.flatMap((members) => members.map((page) => page.pageid))
     );
-    const pages = Object.values(catalogPayload.query?.pages || {})
+    const uniquePages = new Map(
+      catalogPayloads
+        .flatMap((payload) => Object.values(payload.query?.pages || {}))
+        .map((page) => [page.pageid, page])
+    );
+    const pages = [...uniquePages.values()]
       .filter((page) => page.ns === 0 && !excludedPageIds.has(page.pageid))
       .map((page) => ({
         id: page.pageid,

@@ -20,9 +20,11 @@ No se necesita una clave API. El servidor Node.js sirve la página y consulta la
 
 ## Categorías y datos de las fichas
 
-- Most Wanted (2005): `Stock (Most Wanted (2005))`.
-- Carbon: `Stock (Carbon)`.
+- Most Wanted (2005): unión de `Stock (Most Wanted (2005))`, `Blacklist Vehicles (Most Wanted (2005))` y `Bonus (Most Wanted (2005))`, deduplicada por ID de página. Incluye el BMW M3 GTR (E46) y su versión Strassenversion.
+- Carbon: unión de `Stock (Carbon)`, `Bonus (Carbon)` y `Crew Boss Vehicles (Carbon)`, deduplicada por ID de página. En la wiki, los 14 coches Bonus y los 2 de jefes de banda ya forman parte de Stock, así que estas categorías no aumentan el total actual de 38 coches. No existe una categoría `Blacklist Vehicles (Carbon)`.
 - Underground 2: `Vehicles (Underground 2)`, excluyendo `Traffic Vehicles (Underground 2)`.
+
+La wiki no tiene categorías `Bonus (Underground 2)` ni `Blacklist Vehicles (Underground 2)`, así que el catálogo de ese juego conserva su lista actual de vehículos jugables sin tráfico. Los colores de acento, la iluminación ambiental y el rótulo principal cambian con el juego seleccionado.
 
 Las páginas de la wiki pueden incluir una plantilla `InfoboxCar`. La ficha presenta los valores disponibles de `production`, `manufacturer`, `eng`, `disp`, `weight`, `bhp`, `torque`, `accel`, `top speed`, `transmission2` y `transmission`. La cobertura puede variar entre coches y juegos.
 
