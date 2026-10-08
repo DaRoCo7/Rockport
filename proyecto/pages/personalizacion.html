@@ -21,16 +21,27 @@
 
       <!-- Espacio inicial para el futuro taller. -->
       <section class="workshop-panel" aria-labelledby="panel-title">
-        <p class="badge">PRÓXIMAMENTE</p>
+        <p class="badge">TALLER · PINTURA</p>
         <h2 id="panel-title">Prepara tu próxima máquina</h2>
         <!-- La API proporciona el vehículo seleccionado. -->
         <p id="vehicle-status" role="status" aria-live="polite">Cargando vehículo...</p>
         <div id="vehicle" hidden>
           <p id="vehicle-game" class="eyebrow"></p>
           <img id="vehicle-image" class="vehicle-image" alt="" hidden>
+          <canvas id="paint-canvas" class="paint-canvas" aria-label="Vista del vehículo con la pintura seleccionada" hidden></canvas>
           <p id="vehicle-image-status" hidden>Imagen no disponible.</p>
         </div>
-        <p>Este espacio estará dedicado a la personalización visual de coches. El taller todavía no está disponible.</p>
+        <!-- Solo se habilita con una imagen y una máscara reales. -->
+        <p id="paint-status" role="status">Pintura no disponible: falta una imagen local y una máscara de carrocería válidas.</p>
+        <fieldset id="paint-selector" disabled aria-describedby="paint-status">
+          <legend>PINTURA</legend>
+          <label><input type="radio" name="paint" value="#f2cb24" checked> Amarillo</label>
+          <label><input type="radio" name="paint" value="#d92b30"> Rojo</label>
+          <label><input type="radio" name="paint" value="#246bdb"> Azul</label>
+          <label><input type="radio" name="paint" value="#279650"> Verde</label>
+          <label><input type="radio" name="paint" value="#ffffff"> Blanco</label>
+          <label><input type="radio" name="paint" value="#101010"> Negro</label>
+        </fieldset>
       </section>
     </main>
 
