@@ -85,6 +85,17 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); }
 .workshop-panel > p:last-child { max-width: 620px; color: var(--muted); line-height: 1.7; }
 .workshop-footer { padding-block: 24px; color: var(--muted); font-size: 0.75rem; }
 
+/* Imagen original completa, sin recortar el coche. */
+.vehicle-image {
+  width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  background: #151619;
+}
+
+#panel-title { overflow-wrap: anywhere; }
+#vehicle-status { color: var(--muted); line-height: 1.6; }
+
 /* Ajustes básicos para pantallas pequeñas. */
 @media (max-width: 600px) {
   .workshop-header { align-items: flex-start; flex-direction: column; gap: 12px; }

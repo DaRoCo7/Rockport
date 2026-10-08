@@ -397,7 +397,13 @@ function createCarDetails(car, details, source) {
   sourceLink.rel = "noopener noreferrer";
   sourceLink.textContent = "Consultar la ficha original de la wiki ↗";
 
-  content.append(gameLabel, title, facts, sourceLink);
+  // Transmite la selección al taller sin alterar el catálogo.
+  const personalizeLink = document.createElement("a");
+  personalizeLink.className = "detail__personalize";
+  personalizeLink.href = `/pages/personalizacion.html?${new URLSearchParams({ id: car.id, game: car.gameId })}`;
+  personalizeLink.textContent = "PERSONALIZAR";
+
+  content.append(gameLabel, title, facts, personalizeLink, sourceLink);
   wrapper.append(image, content);
   return wrapper;
 }
