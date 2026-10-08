@@ -1,0 +1,869 @@
+{
+  "startedAt": "2026-10-08T08:55:32.360Z",
+  "downloaded": [],
+  "skipped": [],
+  "failed": [
+    {
+      "game": "most-wanted-2005",
+      "id": 3074,
+      "title": "Aston Martin DB9",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/c/cb/NFSPSAstonMartinDB9.jpg/revision/latest/scale-to-width-down/640?cb=20210530195012&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 8747,
+      "title": "Audi A3 3.2 quattro",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/4/49/NFSWAudiA3Grey.jpg/revision/latest/scale-to-width-down/640?cb=20130601112025&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 8400,
+      "title": "Audi A4 3.2 FSI quattro",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/2a/NFSMW_Audi_A4quattro_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223229&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 11254,
+      "title": "Audi TT 3.2 quattro (8N)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/e/e0/NFSMW_Audi_TTquattro_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223229&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 9373,
+      "title": "BMW M3 GTR (E46)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/f/ff/MW2012M3GTRE46.jpg/revision/latest/scale-to-width-down/640?cb=20130329120622&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 2477,
+      "title": "BMW M3 GTR Strassenversion (E46)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/99/NFSMW_BMW_M3GTR_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223229&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 3348,
+      "title": "Cadillac CTS (Gen. 1)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/95/NFSMW_Cadillac_CTS_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223232&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 11066,
+      "title": "Chevrolet Camaro SS 396 (1967)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/2f/TheRun-image130261.jpg/revision/latest/scale-to-width-down/640?cb=20120428184931&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 11164,
+      "title": "Chevrolet Cobalt SS (2004)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/5/5d/NFSMW_Chevrolet_CobaltSS_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223232&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 10050,
+      "title": "Chevrolet Corvette (C6)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/03/NFSPSChevroletCorvetteC6.jpg/revision/latest/scale-to-width-down/640?cb=20210530200924&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 51440,
+      "title": "Chevrolet Corvette C6.R (2005)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/f/f1/NFSMW_Chevrolet_CorvetteC6R_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223232&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 14521,
+      "title": "Dodge Viper SRT-10 (ZB I)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/8/8f/NFSMW_Dodge_ViperSRT10_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223232&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 3178,
+      "title": "Fiat Punto",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/6/69/NFSMW_Fiat_GrandePunto_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223233&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 3177,
+      "title": "Ford GT (Gen. 1)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/d/da/TheRun-image130386.jpg/revision/latest/scale-to-width-down/640?cb=20120428224745&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 10288,
+      "title": "Ford Mustang GT (Gen. 5) (2005)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/5/56/NFSPSFordMustangGT2005.jpg/revision/latest/scale-to-width-down/640?cb=20210530202610&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 51644,
+      "title": "Lamborghini Gallardo (2005)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/bf/NFSMW_Lamborghini_Gallardo_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223234&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 1586,
+      "title": "Lamborghini Murciélago VT",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/a/a3/NFSHP2_PC_Lamborghini_Murci%C3%A9lago.jpg/revision/latest/scale-to-width-down/640?cb=20200408012141&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 6629,
+      "title": "Lexus IS 300",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/09/NFSMW_Lexus_IS300_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223234&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 11233,
+      "title": "Lotus Elise 111R",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/4/49/NFSPSLotusElise111R.jpg/revision/latest/scale-to-width-down/640?cb=20210530204556&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 9250,
+      "title": "Mazda RX-7 (FD) (Series 6)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/07/NFSE_Mazda_RX7FD_1995.jpg/revision/latest/scale-to-width-down/640?cb=20220516220445&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 51483,
+      "title": "Mazda RX-8 (2004)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/f/f1/NFSMW_Mazda_RX8_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223236&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 2542,
+      "title": "Mercedes-Benz CLK 500",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/3/34/NFSMW_MercedesBenz_CLK500_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223236&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 11193,
+      "title": "Mercedes-Benz SL 500 (R230)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/96/NFSMW_MercedesBenz_SL500_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223239&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 11196,
+      "title": "Mercedes-Benz SL 65 AMG (R230)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/3/3c/NFSMW_MercedesBenz_SL65AMG_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223236&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 1826,
+      "title": "Mercedes-Benz SLR McLaren",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/3/37/NFSMW_MercedesBenz_SLRMcLaren_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223239&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 3176,
+      "title": "Mitsubishi Eclipse GT",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/2d/NFSMW_Mitsubishi_EclipseGT_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223239&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 2588,
+      "title": "Mitsubishi Lancer Evolution VIII",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/bd/NFSUG2_Mitsubishi_LancerEvolutionVIII_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110172649&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 10235,
+      "title": "Pontiac GTO (2005)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/bd/NFSPSPontiacGTO2005.jpg/revision/latest/scale-to-width-down/640?cb=20210530210900&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 10205,
+      "title": "Porsche 911 Carrera S (997)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/d/d9/NFSMW_Porsche_911CarreraS_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223239&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 11056,
+      "title": "Porsche 911 GT2 (996)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/c/cd/NFSMW_Porsche_911GT2_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223242&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 10678,
+      "title": "Porsche 911 Turbo S (996)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/26/NFSMW_Porsche_911TurboS_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223242&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 2845,
+      "title": "Porsche Carrera GT (980)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/1/10/NFSPSPorscheCarreraGT.jpg/revision/latest/scale-to-width-down/640?cb=20210530211248&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 51650,
+      "title": "Porsche Cayman S (2006)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/94/NFSPSPorscheCaymanS2005.jpg/revision/latest/scale-to-width-down/640?cb=20210530211330&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 3342,
+      "title": "Renault Clio V6",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/08/NFSE_Renault_ClioV6_2003.jpg/revision/latest/scale-to-width-down/640?cb=20220515155409&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 9640,
+      "title": "Subaru Impreza WRX STi (2004)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/b9/NFSMW_Subaru_ImprezaWRXSTi_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223242&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 51656,
+      "title": "Toyota Supra Turbo (1998)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/5/53/NFSMW_Toyota_Supra_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223244&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 3335,
+      "title": "Vauxhall Monaro VXR",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/9b/NFSMW_Vauxhall_MonaroVXR_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223244&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "most-wanted-2005",
+      "id": 11104,
+      "title": "Volkswagen Golf GTI (Mk5)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/6/61/NFSPSVolkswagenGolfGTIHeader.jpg/revision/latest/scale-to-width-down/640?cb=20160105133638&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 2119,
+      "title": "Alfa Romeo Brera",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/91/NFSC_AlfaRomeo_Brera_Stock.jpg/revision/latest/scale-to-width-down/640?cb=20220328173856&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3074,
+      "title": "Aston Martin DB9",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/c/cb/NFSPSAstonMartinDB9.jpg/revision/latest/scale-to-width-down/640?cb=20210530195012&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 11066,
+      "title": "Chevrolet Camaro SS 396 (1967)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/2f/TheRun-image130261.jpg/revision/latest/scale-to-width-down/640?cb=20120428184931&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 51444,
+      "title": "Chevrolet Corvette Z06 (2006)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/d/d5/CorvetteZ06_2_CARPAGE.jpg/revision/latest/scale-to-width-down/640?cb=20101125023217&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3355,
+      "title": "Chrysler 300C SRT-8",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/bf/NFSC_Chrysler_300CHemiSRT8_Stock.jpg/revision/latest/scale-to-width-down/640?cb=20220328174336&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3182,
+      "title": "Dodge Challenger Concept",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/1/1d/NFSPSDodgeChallengerConcept.jpg/revision/latest/scale-to-width-down/640?cb=20210530201804&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3181,
+      "title": "Dodge Challenger R/T 440",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/1/14/NFSPSDodgeChallengerRT440.jpg/revision/latest/scale-to-width-down/640?cb=20210530201813&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 10781,
+      "title": "Dodge Charger R/T (1969)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/2f/NFSUB_Garage_Dodge_ChargerRT1969.jpg/revision/latest/scale-to-width-down/640?cb=20230218183024&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 10774,
+      "title": "Dodge Charger SRT8 (LX)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/1/12/HP2010ChargerSRT8.jpg/revision/latest/scale-to-width-down/640?cb=20170120100843&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 14521,
+      "title": "Dodge Viper SRT-10 (ZB I)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/8/8f/NFSMW_Dodge_ViperSRT10_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223232&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3177,
+      "title": "Ford GT (Gen. 1)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/d/da/TheRun-image130386.jpg/revision/latest/scale-to-width-down/640?cb=20120428224745&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 10288,
+      "title": "Ford Mustang GT (Gen. 5) (2005)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/5/56/NFSPSFordMustangGT2005.jpg/revision/latest/scale-to-width-down/640?cb=20210530202610&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3356,
+      "title": "Infiniti G35",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/07/NFSPSInfinitiG35.jpg/revision/latest/scale-to-width-down/640?cb=20210530203116&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 11161,
+      "title": "Jaguar XK (2006)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/b3/NFSC_Jaguar_XK_Stock.jpg/revision/latest/scale-to-width-down/640?cb=20220328174741&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 51645,
+      "title": "Lamborghini Gallardo (2006)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/6/61/Gallardo_ps2.jpg/revision/latest/scale-to-width-down/640?cb=20110702190617&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 1586,
+      "title": "Lamborghini Murciélago VT",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/a/a3/NFSHP2_PC_Lamborghini_Murci%C3%A9lago.jpg/revision/latest/scale-to-width-down/640?cb=20200408012141&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 11233,
+      "title": "Lotus Elise 111R",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/4/49/NFSPSLotusElise111R.jpg/revision/latest/scale-to-width-down/640?cb=20210530204556&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3076,
+      "title": "Mazda Mazdaspeed3 (BK)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/2a/NFSW_Mazda_Mazdaspeed_3_Red.jpg/revision/latest/scale-to-width-down/640?cb=20140907154230&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 9250,
+      "title": "Mazda RX-7 (FD) (Series 6)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/07/NFSE_Mazda_RX7FD_1995.jpg/revision/latest/scale-to-width-down/640?cb=20220516220445&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 51483,
+      "title": "Mazda RX-8 (2004)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/f/f1/NFSMW_Mazda_RX8_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223236&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 2542,
+      "title": "Mercedes-Benz CLK 500",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/3/34/NFSMW_MercedesBenz_CLK500_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223236&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 11196,
+      "title": "Mercedes-Benz SL 65 AMG (R230)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/3/3c/NFSMW_MercedesBenz_SL65AMG_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223236&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 1826,
+      "title": "Mercedes-Benz SLR McLaren",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/3/37/NFSMW_MercedesBenz_SLRMcLaren_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223239&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3176,
+      "title": "Mitsubishi Eclipse GT",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/2d/NFSMW_Mitsubishi_EclipseGT_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223239&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 9567,
+      "title": "Mitsubishi Lancer Evolution IX MR-edition",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/e/e9/NFS2015MitsubishiLancerEvolutionMR2008Garage.jpg/revision/latest/scale-to-width-down/640?cb=20151117223821&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 12300,
+      "title": "Nissan 350Z (2003)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/a/a0/NFSUG2_Nissan_350Z_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110172807&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 1975,
+      "title": "Nissan 240SX (S13)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/7/76/S2UNissan240SXArticleHeader.jpg/revision/latest/scale-to-width-down/640?cb=20160217222447&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 6447,
+      "title": "Nissan Skyline GT-R V-Spec (R34)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/8/81/NFSUB_Garage_Nissan_SkylineGTRVSpecR341999.jpg/revision/latest/scale-to-width-down/640?cb=20230218183301&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3839,
+      "title": "Plymouth HEMI 'Cuda",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/bf/NFSPSPlymouthHEMICuda.jpg/revision/latest/scale-to-width-down/640?cb=20210530210600&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 10675,
+      "title": "Porsche 911 Turbo (997)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/94/NFSC_Porsche_911Turbo_Stock.jpg/revision/latest/scale-to-width-down/640?cb=20220328183504&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 2845,
+      "title": "Porsche Carrera GT (980)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/1/10/NFSPSPorscheCarreraGT.jpg/revision/latest/scale-to-width-down/640?cb=20210530211248&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 51650,
+      "title": "Porsche Cayman S (2006)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/94/NFSPSPorscheCaymanS2005.jpg/revision/latest/scale-to-width-down/640?cb=20210530211330&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3342,
+      "title": "Renault Clio V6",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/08/NFSE_Renault_ClioV6_2003.jpg/revision/latest/scale-to-width-down/640?cb=20220515155409&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 9349,
+      "title": "Shelby GT500 (1967)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/4/42/MW2012GT500.jpg/revision/latest/scale-to-width-down/640?cb=20130414062723&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 9648,
+      "title": "Subaru Impreza WRX STI (2006)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/bf/NFSUB_Garage_Subaru_ImprezaWRXSTi2006.jpg/revision/latest/scale-to-width-down/640?cb=20230218183344&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 51656,
+      "title": "Toyota Supra Turbo (1998)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/5/53/NFSMW_Toyota_Supra_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223244&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3335,
+      "title": "Vauxhall Monaro VXR",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/9b/NFSMW_Vauxhall_MonaroVXR_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223244&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "carbon",
+      "id": 3046,
+      "title": "Volkswagen Golf R32 (Mk5)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/2f/NFSE_Volkswagen_GolfR32_2006.jpg/revision/latest/scale-to-width-down/640?cb=20220515195815&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3345,
+      "title": "Acura RSX Type-S",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/1/12/NFSUB_Garage_Acura_RSXS2004.jpg/revision/latest/scale-to-width-down/640?cb=20230218182909&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 8747,
+      "title": "Audi A3 3.2 quattro",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/4/49/NFSWAudiA3Grey.jpg/revision/latest/scale-to-width-down/640?cb=20130601112025&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 11254,
+      "title": "Audi TT 3.2 quattro (8N)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/e/e0/NFSMW_Audi_TTquattro_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223229&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3350,
+      "title": "Cadillac Escalade (GMT800)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/92/NFSUG2_Cadillac_Escalade_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110171318&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3315,
+      "title": "Ford Focus ZX3 (Gen. 1)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/5/55/NFSUG2_Ford_Focus_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110171403&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 10288,
+      "title": "Ford Mustang GT (Gen. 5) (2005)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/5/56/NFSPSFordMustangGT2005.jpg/revision/latest/scale-to-width-down/640?cb=20210530202610&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 9797,
+      "title": "Honda Civic Si (EM1)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/6/67/NFSUG2_Honda_Civic_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110171602&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3354,
+      "title": "Hyundai Tiburon GT",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/7/70/NFSUG2_Hyundai_TiburonGTV6_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110171730&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3351,
+      "title": "Hummer H2",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/9/97/NFSUG2_Hummer_H2_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110171641&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3356,
+      "title": "Infiniti G35",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/07/NFSPSInfinitiG35.jpg/revision/latest/scale-to-width-down/640?cb=20210530203116&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 6629,
+      "title": "Lexus IS 300",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/09/NFSMW_Lexus_IS300_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223234&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3352,
+      "title": "Lincoln Navigator",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/c/cd/NFSUG2_Lincoln_Navigator_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110172103&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 9776,
+      "title": "Mazda MX-5 (NB)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/c/cf/NFSUG2_Mazda_MX5_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110172146&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 9250,
+      "title": "Mazda RX-7 (FD) (Series 6)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/0/07/NFSE_Mazda_RX7FD_1995.jpg/revision/latest/scale-to-width-down/640?cb=20220516220445&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 51483,
+      "title": "Mazda RX-8 (2004)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/f/f1/NFSMW_Mazda_RX8_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223236&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3373,
+      "title": "Mitsubishi 3000GT VR-4",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/c/c0/NFSUG2_Mitsubishi_3000GT_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110172450&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 50210,
+      "title": "Mitsubishi Eclipse GSX",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/8/8b/NFSUB_Garage_Mitsubishi_EclipseGSX1999.jpg/revision/latest/scale-to-width-down/640?cb=20230218183232&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 2588,
+      "title": "Mitsubishi Lancer Evolution VIII",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/bd/NFSUG2_Mitsubishi_LancerEvolutionVIII_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110172649&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 1975,
+      "title": "Nissan 240SX (S13)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/7/76/S2UNissan240SXArticleHeader.jpg/revision/latest/scale-to-width-down/640?cb=20160217222447&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 12300,
+      "title": "Nissan 350Z (2003)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/a/a0/NFSUG2_Nissan_350Z_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110172807&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3292,
+      "title": "Nissan Sentra SE-R Spec V",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/2/21/NFSUG2_Nissan_SentraSERSpecV_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110173001&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 6447,
+      "title": "Nissan Skyline GT-R V-Spec (R34)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/8/81/NFSUB_Garage_Nissan_SkylineGTRVSpecR341999.jpg/revision/latest/scale-to-width-down/640?cb=20230218183301&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3382,
+      "title": "Peugeot 206",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/7/70/NFSUG2_Peugeot_206_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110173212&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3385,
+      "title": "Peugeot 106",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/7/7d/NFSUG2_Peugeot_106_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110173141&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 2622,
+      "title": "Pontiac GTO (2004)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/be/NFSUG2_Pontiac_GTO_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110173248&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 9640,
+      "title": "Subaru Impreza WRX STi (2004)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/b/b9/NFSMW_Subaru_ImprezaWRXSTi_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20251126223242&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 4261,
+      "title": "Toyota Celica GT-S",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/4/47/NFSUG2_Toyota_Celica_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110173539&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 2351,
+      "title": "Toyota Corolla GT-S",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/c/ce/NFSPSToyotaCorollaGTSAE86.jpg/revision/latest/scale-to-width-down/640?cb=20210530211648&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 51653,
+      "title": "Toyota Supra (1998)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/3/32/NFSUG2_Toyota_Supra_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110173736&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 3042,
+      "title": "Vauxhall Corsa 1.8",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/1/16/NFSUG2_Vauxhall_Corsa18_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110173810&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    },
+    {
+      "game": "underground-2",
+      "id": 11101,
+      "title": "Volkswagen Golf GTI 1.8T (Mk4)",
+      "originalUrl": "https://static.wikia.nocookie.net/nfs/images/1/1e/NFSUG2_Volkswagen_GolfGTI_Stock_F.jpg/revision/latest/scale-to-width-down/640?cb=20241110173839&path-prefix=en",
+      "localPath": null,
+      "error": "HTTP 403"
+    }
+  ],
+  "finishedAt": "2026-10-08T08:56:10.083Z",
+  "totals": {
+    "downloaded": 0,
+    "skipped": 0,
+    "failed": 107
+  }
+}

@@ -32,6 +32,8 @@ app.use("/css", express.static(path.join(__dirname, "proyecto", "css")));
 app.use("/js", express.static(path.join(__dirname, "proyecto", "js")));
 // Sirve las páginas independientes, incluido el taller de personalización.
 app.use("/pages", express.static(path.join(__dirname, "proyecto", "pages")));
+// Sirve imágenes y máscaras locales del taller de personalización.
+app.use("/assets", express.static(path.join(__dirname, "proyecto", "assets")));
 
 app.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "proyecto", "html", "index.html"));

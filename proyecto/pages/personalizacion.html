@@ -6,7 +6,16 @@
     <meta name="description" content="Futuro taller de personalización de coches de Need for Speed.">
     <title>TALLER DE PERSONALIZACIÓN</title>
     <link rel="stylesheet" href="../css/personalizacion.css">
-    <script src="../js/personalizacion.js" defer></script>
+    <!-- Versiones fijas y resolución de módulos del visor. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="../js/personalizacion.js"></script>
   </head>
   <body>
     <header class="workshop-header">
@@ -28,11 +37,11 @@
         <div id="vehicle" hidden>
           <p id="vehicle-game" class="eyebrow"></p>
           <img id="vehicle-image" class="vehicle-image" alt="" hidden>
-          <canvas id="paint-canvas" class="paint-canvas" aria-label="Vista del vehículo con la pintura seleccionada" hidden></canvas>
           <p id="vehicle-image-status" hidden>Imagen no disponible.</p>
         </div>
-        <!-- Solo se habilita con una imagen y una máscara reales. -->
-        <p id="paint-status" role="status">Pintura no disponible: falta una imagen local y una máscara de carrocería válidas.</p>
+        <!-- Geometría temporal hasta disponer de modelos de coches. -->
+        <div id="car-viewer" class="car-viewer"></div>
+        <p id="paint-status" role="status">Iniciando visor 3D de prueba...</p>
         <fieldset id="paint-selector" disabled aria-describedby="paint-status">
           <legend>PINTURA</legend>
           <label><input type="radio" name="paint" value="#f2cb24" checked> Amarillo</label>
