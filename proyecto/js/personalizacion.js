@@ -141,16 +141,17 @@ async function initializeViewer() {
       import("three/addons/loaders/KTX2Loader.js")
     ]);
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#151619");
+    scene.background = new THREE.Color("#111318");
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(4, 3, 5);
+    camera.position.set(4, 2.4, 5);
     // Luz suave y acentos cálidos/fríos para destacar la carrocería.
-    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-    keyLight = new THREE.DirectionalLight(0xfff1da, 3);
+    // Relleno suave para conservar detalle en las zonas oscuras.
+    scene.add(new THREE.HemisphereLight(0xe6edff, 0x343238, 0.85));
+    keyLight = new THREE.DirectionalLight(0xfff1e3, 2.6);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.set(1024, 1024);
-    const fillLight = new THREE.DirectionalLight(0xc2d5ff, 1.1);
-    const rimLight = new THREE.DirectionalLight(0xffffff, 2);
+    const fillLight = new THREE.DirectionalLight(0xd0dfff, 1.35);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.6);
     scene.add(keyLight, fillLight, rimLight);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     // Solo la luz principal genera sombras suaves de coste moderado.
@@ -163,18 +164,28 @@ async function initializeViewer() {
     controls.enablePan = false;
     let radius = 1;
     let fittedAspect = null;
+    const framingCorners = [];
     function fitCamera() {
       const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
       const horizontal = Math.atan(Math.tan(halfFov) * camera.aspect);
-      // Acerca el coche conservando un margen alrededor de su esfera envolvente.
-      const distance = radius / Math.sin(Math.min(halfFov, horizontal)) * 1.08;
       const direction = camera.position.clone().sub(controls.target).normalize();
-      camera.position.copy(direction.multiplyScalar(distance));
-      controls.target.set(0, 0, 0);
+      const right = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
+      const up = new THREE.Vector3().crossVectors(direction, right).normalize();
+      // Proyecta la caja: respeta ambos ejes y deja un 8 % de margen.
+      let distance = radius * 1.2;
+      for (const corner of framingCorners) {
+        const offset = corner.clone().sub(controls.target);
+        const depth = offset.dot(direction);
+        distance = Math.max(distance,
+          depth + Math.abs(offset.dot(right)) * 1.08 / Math.tan(horizontal),
+          depth + Math.abs(offset.dot(up)) * 1.08 / Math.tan(halfFov));
+      }
+      camera.position.copy(controls.target).addScaledVector(direction, distance);
       controls.minDistance = radius * 1.2;
-      controls.maxDistance = distance * 4;
+      // Conserva el alcance de zoom anterior, basado en la esfera envolvente.
+      controls.maxDistance = radius / Math.sin(Math.min(halfFov, horizontal)) * 1.08 * 4;
       camera.near = radius / 100;
-      camera.far = distance * 10 + radius;
+      camera.far = controls.maxDistance * 2.5 + radius;
       camera.updateProjectionMatrix();
       controls.update();
     }
@@ -243,6 +254,15 @@ async function initializeViewer() {
     radius = bounds.getSize(new THREE.Vector3()).length() / 2;
     model.position.sub(center);
     scene.add(model);
+    // Un objetivo algo más bajo eleva el coche y reduce el vacío inferior.
+    controls.target.set(0, -(bounds.max.y - bounds.min.y) * 0.08, 0);
+    for (const x of [bounds.min.x, bounds.max.x]) {
+      for (const y of [bounds.min.y, bounds.max.y]) {
+        for (const z of [bounds.min.z, bounds.max.z]) {
+          framingCorners.push(new THREE.Vector3(x, y, z).sub(center));
+        }
+      }
+    }
     // El mínimo del modelo centrado sitúa el suelo bajo las ruedas.
     const floorY = bounds.min.y - center.y;
     floor = new THREE.Mesh(
