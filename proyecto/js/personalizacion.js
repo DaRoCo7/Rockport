@@ -6,14 +6,37 @@ const vehicleImage = document.querySelector("#vehicle-image");
 const imageStatus = document.querySelector("#vehicle-image-status");
 const viewer = document.querySelector("#car-viewer");
 const paintSelector = document.querySelector("#paint-selector");
+const finishSelector = document.querySelector("#finish-selector");
 const paintStatus = document.querySelector("#paint-status");
 
 async function initializeViewer() {
   let renderer, controls, model, observer, textureLoader, floor, keyLight;
   const paintMaterials = new Set();
+  const originalFinishes = new Map();
+  const finishProperties = ["roughness", "metalness", "clearcoat", "clearcoatRoughness"];
+  const finishes = {
+    matte: { roughness: 0.72, metalness: 0.18, clearcoat: 0.18, clearcoatRoughness: 0.55 },
+    glossy: { roughness: 0.23, metalness: 0.18, clearcoat: 0.75, clearcoatRoughness: 0.2 },
+    metallic: { roughness: 0.34, metalness: 0.65, clearcoat: 0.55, clearcoatRoughness: 0.28 }
+  };
   const changeColor = (event) => {
     if (event.target.matches('input[name="paint"]')) {
       for (const material of paintMaterials) material.color.set(event.target.value);
+    }
+  };
+  const changeFinish = (event) => {
+    if (!event.target.matches('input[name="finish"]')) return;
+    const name = event.target.value;
+    if (name !== "original" && !Object.hasOwn(finishes, name)) return;
+    for (const material of paintMaterials) {
+      const original = originalFinishes.get(material);
+      // Cada acabado parte del original; no acumula cambios ni altera texturas o color.
+      for (const property of Object.keys(original)) {
+        material[property] = name === "original" ? original[property]
+          : Math.min(0.85, Math.max(0.12, original[property] * 0.25 + finishes[name][property] * 0.75));
+      }
+      // Clearcoat puede activar una variante del shader del material físico.
+      material.needsUpdate = true;
     }
   };
   function dispose() {
@@ -39,7 +62,9 @@ async function initializeViewer() {
     renderer?.dispose();
     renderer?.domElement.remove();
     paintSelector.removeEventListener("change", changeColor);
+    finishSelector.removeEventListener("change", changeFinish);
     paintSelector.disabled = true;
+    finishSelector.disabled = true;
   }
   try {
     // El import map fija una misma versión para los módulos.
@@ -118,10 +143,16 @@ async function initializeViewer() {
       object.castShadow = true;
       if (!object.name.startsWith("Body")) return;
       for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-        if (paintNames.has(material.name)) paintMaterials.add(material);
+        if (!paintNames.has(material.name) || paintMaterials.has(material)) continue;
+        paintMaterials.add(material);
+        // Guarda solo propiedades numéricas compatibles antes de personalizar.
+        originalFinishes.set(material, Object.freeze(Object.fromEntries(
+          finishProperties.filter((property) => Number.isFinite(material[property]))
+            .map((property) => [property, material[property]])
+        )));
       }
     });
-    // Solo cambia color; conserva clearcoat, rugosidad, metal y texturas originales.
+    // Conserva la geometría y las texturas originales del modelo.
     const bounds = new THREE.Box3().setFromObject(model, true);
     if (bounds.isEmpty()) throw new Error("El modelo no contiene geometría visible");
     const center = bounds.getCenter(new THREE.Vector3());
@@ -162,10 +193,13 @@ async function initializeViewer() {
     fittedAspect = camera.aspect;
     viewer.setAttribute("aria-busy", "false");
     paintSelector.addEventListener("change", changeColor);
+    finishSelector.addEventListener("change", changeFinish);
     paintSelector.disabled = paintMaterials.size === 0;
+    finishSelector.disabled = paintMaterials.size === 0;
     if (paintMaterials.size) {
       changeColor({ target: paintSelector.querySelector("input:checked") });
-      paintStatus.textContent = "CarConcept cargado. Cambia la pintura exterior, arrastra para rotar y usa la rueda o un gesto de pinza para hacer zoom.";
+      changeFinish({ target: finishSelector.querySelector("input:checked") });
+      paintStatus.textContent = "CarConcept cargado. Combina color y acabado exterior, arrastra para rotar y usa la rueda o un gesto de pinza para hacer zoom.";
     } else {
       paintStatus.textContent = "Modelo cargado, pero no se encontraron materiales de pintura compatibles.";
     }
