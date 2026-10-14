@@ -63,7 +63,7 @@ function prepareRimMaterials(gltf) {
   return { originals, targets };
 }
 
-function createFiveSpokeRims(THREE, targets, colors) {
+function createCustomRims(THREE, targets, colors) {
   const parts = [...targets.values()];
   const bounds = new THREE.Box3();
   for (const part of [targets.get("90:0"), targets.get("90:1")]) {
@@ -85,43 +85,53 @@ function createFiveSpokeRims(THREE, targets, colors) {
   const hubGeometry = new THREE.CylinderGeometry(hubRadius, hubRadius, depth, 32);
   hubGeometry.rotateZ(-Math.PI / 2);
   const spokeLength = innerRadius - hubRadius + radius * 0.04;
-  const spokeGeometry = new THREE.BoxGeometry(depth, spokeLength, radius * 0.10);
+  // Ambos diseños comparten aro, centro y material; solo varían los radios.
+  const designs = [
+    { name: "five-spoke", prefix: "FiveSpokeRim", count: 5, width: 0.10 },
+    { name: "multi-spoke", prefix: "MultiSpokeRim", count: 12, width: 0.035 }
+  ];
   const source = parts.find((part) => part.material.name === "Rim1").material;
   const material = new THREE.MeshStandardMaterial({
     color: colors.get(source), metalness: 0.85, roughness: 0.3
   });
   colors.set(material, material.color.clone());
-  const replacements = [];
-  for (const meshIndex of [90, 92, 94, 96]) {
-    const original = targets.get(`${meshIndex}:0`);
-    const replacement = new THREE.Group();
-    replacement.name = `FiveSpokeRim${meshIndex}`;
-    // Mismo padre y transformación local: conserva giro, escala y centrado.
-    replacement.position.copy(original.parent.position);
-    replacement.quaternion.copy(original.parent.quaternion);
-    replacement.scale.copy(original.parent.scale);
-    const design = new THREE.Group();
-    // La cara exterior de las ruedas derechas mira hacia -X local.
-    if (meshIndex === 92 || meshIndex === 96) design.rotation.y = Math.PI;
-    replacement.add(design);
-    const barrel = new THREE.Mesh(barrelGeometry, material);
-    const hub = new THREE.Mesh(hubGeometry, material);
-    hub.position.x = face;
-    design.add(barrel, hub);
-    for (let i = 0; i < 5; i++) {
-      const angle = i * Math.PI * 2 / 5;
-      const spoke = new THREE.Mesh(spokeGeometry, material);
-      const distance = hubRadius + spokeLength / 2 - radius * 0.02;
-      spoke.position.set(face, Math.cos(angle) * distance, Math.sin(angle) * distance);
-      spoke.rotation.x = angle;
-      design.add(spoke);
+  const replacements = new Map();
+  for (const { name, prefix, count, width } of designs) {
+    // Una geometría de radio por diseño, reutilizada en las cuatro ruedas.
+    const spokeGeometry = new THREE.BoxGeometry(depth, spokeLength, radius * width);
+    const rims = [];
+    replacements.set(name, rims);
+    for (const meshIndex of [90, 92, 94, 96]) {
+      const original = targets.get(`${meshIndex}:0`);
+      const replacement = new THREE.Group();
+      replacement.name = `${prefix}${meshIndex}`;
+      // Mismo padre y transformación local: conserva giro, escala y centrado.
+      replacement.position.copy(original.parent.position);
+      replacement.quaternion.copy(original.parent.quaternion);
+      replacement.scale.copy(original.parent.scale);
+      const design = new THREE.Group();
+      // La cara exterior de las ruedas derechas mira hacia -X local.
+      if (meshIndex === 92 || meshIndex === 96) design.rotation.y = Math.PI;
+      replacement.add(design);
+      const barrel = new THREE.Mesh(barrelGeometry, material);
+      const hub = new THREE.Mesh(hubGeometry, material);
+      hub.position.x = face;
+      design.add(barrel, hub);
+      for (let i = 0; i < count; i++) {
+        const angle = i * Math.PI * 2 / count;
+        const spoke = new THREE.Mesh(spokeGeometry, material);
+        const distance = hubRadius + spokeLength / 2 - radius * 0.02;
+        spoke.position.set(face, Math.cos(angle) * distance, Math.sin(angle) * distance);
+        spoke.rotation.x = angle;
+        design.add(spoke);
+      }
+      replacement.traverse((object) => {
+        if (object.isMesh) object.castShadow = true;
+      });
+      replacement.visible = false;
+      original.parent.parent.add(replacement);
+      rims.push(replacement);
     }
-    replacement.traverse((object) => {
-      if (object.isMesh) object.castShadow = true;
-    });
-    replacement.visible = false;
-    original.parent.parent.add(replacement);
-    replacements.push(replacement);
   }
   return replacements;
 }
@@ -131,14 +141,17 @@ async function initializeViewer() {
   const paintMaterials = new Set();
   let originalRimColors = new Map();
   let originalRimParts = [];
-  let replacementRims = [];
+  let replacementRims = new Map();
   const changeRimDesign = (event) => {
     if (!event.target.matches('input[name="rim-design"]')) return;
-    if (!["original", "five-spoke"].includes(event.target.value)) return;
-    const custom = event.target.value === "five-spoke";
+    const selected = event.target.value;
+    if (selected !== "original" && !replacementRims.has(selected)) return;
     // Oculta solo las ocho primitivas; conserva neumáticos, discos y frenos.
-    for (const part of originalRimParts) part.visible = !custom;
-    for (const replacement of replacementRims) replacement.visible = custom;
+    for (const part of originalRimParts) part.visible = selected === "original";
+    // Cambia visibilidad sin crear objetos ni afectar otras piezas.
+    for (const [name, rims] of replacementRims) {
+      for (const rim of rims) rim.visible = name === selected;
+    }
     renderer.shadowMap.needsUpdate = true;
   };
   const rimColors = { black: "#17191c", silver: "#b8bec5", bronze: "#96704a", gold: "#c4a45a" };
@@ -297,7 +310,7 @@ async function initializeViewer() {
     if (rimMaterials) {
       originalRimColors = rimMaterials.originals;
       originalRimParts = [...rimMaterials.targets.values()];
-      replacementRims = createFiveSpokeRims(THREE, rimMaterials.targets, originalRimColors);
+      replacementRims = createCustomRims(THREE, rimMaterials.targets, originalRimColors);
       rimDesignSelector.disabled = false;
       rimDesignSelector.addEventListener("change", changeRimDesign);
       changeRimDesign({ target: rimDesignSelector.querySelector("input:checked") });
