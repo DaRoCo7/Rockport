@@ -11,6 +11,150 @@ const rimSelector = document.querySelector("#rim-selector");
 const rimDesignSelector = document.querySelector("#rim-design-selector");
 const rimStatus = document.querySelector("#rim-status");
 const paintStatus = document.querySelector("#paint-status");
+const tireSelector = document.querySelector("#tire-selector");
+const tireStatus = document.querySelector("#tire-status");
+
+function createTreadTextures(THREE, style) {
+  const size = 256;
+  const color = new Uint8Array(size * size * 4);
+  const height = new Uint8Array(size * size * 4);
+  const periodicDistance = (value) => Math.abs(value - Math.round(value));
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = (x + 0.5) / size;
+      const v = (y + 0.5) / size;
+      // U cruza la banda; V da ocho vueltas de textura en las UV originales.
+      const longitudinal = style === "sport"
+        ? Math.min(...[0.22, 0.5, 0.78].map((lane) => Math.abs(u - lane))) < 0.018
+        : Math.min(Math.abs(u - 0.30), Math.abs(u - 0.70)) < 0.012;
+      const transverse = style === "sport"
+        ? periodicDistance(v * 6 + Math.abs(u - 0.5) * 2) < 0.07
+        : (u < 0.24 || u > 0.76) && periodicDistance(v * 3 + u * 0.5) < 0.045;
+      const groove = longitudinal || transverse;
+      const offset = (y * size + x) * 4;
+      color.set(groove ? [9, 10, 11, 255] : [39, 41, 43, 255], offset);
+      const level = groove ? 30 : 220;
+      height.set([level, level, level, 255], offset);
+    }
+  }
+  const map = new THREE.DataTexture(color, size, size);
+  const bumpMap = new THREE.DataTexture(height, size, size);
+  map.colorSpace = THREE.SRGBColorSpace;
+  for (const texture of [map, bumpMap]) {
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.generateMipmaps = true;
+    texture.needsUpdate = true;
+  }
+  return { map, bumpMap };
+}
+
+function createSidewallTexture(THREE, style) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1024;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("No se pudo crear la textura del flanco");
+  const center = canvas.width / 2;
+  context.fillStyle = "#17191b";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  // Las UV de ambos flancos forman el mismo anillo entre radios 0,375 y 0,497.
+  const ring = (radius, color, width) => {
+    context.beginPath();
+    context.arc(center, center, radius * canvas.width, 0, Math.PI * 2);
+    context.strokeStyle = color;
+    context.lineWidth = width;
+    context.stroke();
+  };
+  ring(0.386, "#27292b", 3);
+  ring(0.481, "#27292b", 3);
+  if (style === "slick") ring(0.469, "#f2cb24", 10);
+  const curvedText = (text, angle, color) => {
+    const radius = canvas.width * 0.431;
+    context.font = "bold 30px sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillStyle = color;
+    const advances = [...text].map((letter) => context.measureText(letter).width + 3);
+    let cursor = angle - advances.reduce((sum, width) => sum + width, 0) / radius / 2;
+    [...text].forEach((letter, index) => {
+      const position = cursor + advances[index] / radius / 2;
+      context.save();
+      context.translate(center + Math.cos(position) * radius, center + Math.sin(position) * radius);
+      context.rotate(position + Math.PI / 2);
+      context.fillText(letter, 0, 0);
+      context.restore();
+      cursor += advances[index] / radius;
+    });
+  };
+  const label = style === "sport" ? "SPORT" : style === "semislick" ? "SEMI SLICK" : "RACING SLICK";
+  const lettering = style === "sport" ? "#51555a" : "#f4f5f6";
+  curvedText(label, -Math.PI / 2, lettering);
+  curvedText(style === "slick" ? "COMPETITION" : "PERFORMANCE", Math.PI / 2, lettering);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  // Igual que los mapas GLTF: evita reflejar verticalmente las letras.
+  texture.flipY = false;
+  return texture;
+}
+
+function prepareTireStyles(THREE, gltf) {
+  // Primitivas verificadas: flanco (0) y rodadura (1), nunca llantas ni frenos.
+  const tireNodes = [[84, 89], [89, 91], [94, 93], [99, 95]];
+  const json = gltf.parser.json;
+  if (json.materials[18]?.name !== "Tireside" || json.materials[19]?.name !== "Tiretread" ||
+      !tireNodes.every(([node, mesh]) => json.nodes[node]?.mesh === mesh &&
+        json.meshes[mesh]?.primitives.length === 2 &&
+        json.meshes[mesh].primitives[0].material === 18 &&
+        json.meshes[mesh].primitives[1].material === 19)) return null;
+  const indices = new Set(tireNodes.map(([, mesh]) => mesh));
+  const targets = new Map();
+  gltf.scene.traverse((object) => {
+    if (!object.isMesh) return;
+    const association = gltf.parser.associations.get(object);
+    if (indices.has(association?.meshes) && [0, 1].includes(association.primitives) &&
+        object.material?.name === (association.primitives === 0 ? "Tireside" : "Tiretread") &&
+        object.geometry.attributes.uv?.itemSize === 2) {
+      targets.set(`${association.meshes}:${association.primitives}`, object);
+    }
+  });
+  if (targets.size !== 8) return null;
+  const originals = new Map([...targets.values()].map((object) => [object, object.material]));
+  const textures = new Map(["sport", "semislick"].map((style) => [style, createTreadTextures(THREE, style)]));
+  const sidewallTextures = new Map(["sport", "semislick", "slick"]
+    .map((style) => [style, createSidewallTexture(THREE, style)]));
+  const styles = new Map([["original", originals]]);
+  const materials = new Set(originals.values());
+  for (const style of ["sport", "semislick", "slick"]) {
+    const clones = new Map();
+    const assignments = new Map();
+    for (const [object, source] of originals) {
+      if (!clones.has(source)) {
+        // Aísla cada variante; Original conserva su material y mapas exactos.
+        const material = source.clone();
+        material.normalMap = null;
+        const sidewall = source.name === "Tireside";
+        material.map = sidewall ? sidewallTextures.get(style) : textures.get(style)?.map ?? null;
+        material.bumpMap = sidewall ? null : textures.get(style)?.bumpMap ?? null;
+        // Retira también el AO horneado del flanco para no conservar marcas antiguas.
+        if (sidewall) material.aoMap = null;
+        material.color.set(!sidewall && style === "slick" ? "#27292b" : "#ffffff");
+        material.roughness = sidewall ? 0.78 : style === "sport" ? 0.85 : style === "semislick" ? 0.72 : 0.55;
+        object.geometry.computeBoundingBox();
+        const bounds = object.geometry.boundingBox;
+        const radius = Math.max(Math.abs(bounds.min.y), Math.abs(bounds.max.y),
+          Math.abs(bounds.min.z), Math.abs(bounds.max.z));
+        // Bump simula surcos con luz, sin desplazar vértices ni cambiar diámetro.
+        material.bumpScale = radius * (style === "sport" ? 0.012 : 0.008);
+        clones.set(source, material);
+        materials.add(material);
+      }
+      assignments.set(object, clones.get(source));
+    }
+    styles.set(style, assignments);
+  }
+  return { styles, materials };
+}
 
 function prepareRimMaterials(gltf) {
   // Índices y nombres comprobados en CarConcept.glb, sin coincidencias parciales.
@@ -67,7 +211,11 @@ function prepareRimMaterials(gltf) {
 const rimDesignDefinitions = [
   { id: "original" },
   { id: "five-spoke", prefix: "FiveSpokeRim", count: 5, width: 0.10 },
-  { id: "multi-spoke", prefix: "MultiSpokeRim", count: 12, width: 0.035 }
+  { id: "multi-spoke", prefix: "MultiSpokeRim", count: 12, width: 0.035 },
+  { id: "concave", prefix: "ConcaveRim", count: 5, width: 0.20, concave: true },
+  { id: "double-spoke", prefix: "DoubleSpokeRim", count: 5, width: 0.03, paired: true },
+  { id: "deep-dish", prefix: "DeepDishRim", count: 12, width: 0.045, dish: true },
+  { id: "racing-six", prefix: "RacingSixRim", count: 6, width: 0.15 }
 ];
 const rimMeshIndices = [90, 92, 94, 96];
 
@@ -122,18 +270,42 @@ function createCustomRims(THREE, targets, colors) {
   const hubRadius = radius * 0.18;
   const hubGeometry = new THREE.CylinderGeometry(hubRadius, hubRadius, depth, 32);
   hubGeometry.rotateZ(-Math.PI / 2);
-  const spokeLength = innerRadius - hubRadius + radius * 0.04;
-  // Ambos diseños comparten aro, centro y material; solo varían los radios.
+  // Todos los diseños comparten barril, centro y material.
   const source = parts.find((part) => part.material.name === "Rim1").material;
   const material = new THREE.MeshStandardMaterial({
     color: colors.get(source), metalness: 0.85, roughness: 0.3
   });
   colors.set(material, material.color.clone());
   const replacements = new Map([["original", parts]]);
-  for (const { id, prefix, count, width } of rimDesignDefinitions) {
+  for (const { id, prefix, count, width, concave, paired, dish } of rimDesignDefinitions) {
     if (id === "original") continue;
+    const spokeRadius = dish ? radius * 0.80 : innerRadius;
+    const spokeLength = spokeRadius - hubRadius + radius * 0.04;
+    const spokeDepth = concave ? depth * 0.5 : depth;
     // Una geometría de radio por diseño, reutilizada en las cuatro ruedas.
-    const spokeGeometry = new THREE.BoxGeometry(depth, spokeLength, radius * width);
+    const spokeGeometry = new THREE.BoxGeometry(spokeDepth, spokeLength, radius * width);
+    if (concave) {
+      // Centro hundido respecto al extremo, sin rebasar la cara original.
+      const positions = spokeGeometry.attributes.position;
+      const rise = Math.min(radius * 0.055, bounds.max.x - face - spokeDepth / 2);
+      for (let vertex = 0; vertex < positions.count; vertex++) {
+        const progress = (positions.getY(vertex) + spokeLength / 2) / spokeLength;
+        positions.setX(vertex, positions.getX(vertex) + progress * rise);
+      }
+      positions.needsUpdate = true;
+      spokeGeometry.computeVertexNormals();
+    }
+    let dishGeometry;
+    if (dish) {
+      // Labio profundo hueco: conecta el centro retraído con el aro exterior.
+      const dishProfile = [[face - depth / 2, spokeRadius], [face + depth / 2, spokeRadius],
+        [bounds.max.x, innerRadius], [bounds.max.x, radius],
+        [bounds.max.x - depth / 2, innerRadius], [face - depth / 2, spokeRadius + radius * 0.04],
+        [face - depth / 2, spokeRadius]];
+      dishGeometry = new THREE.LatheGeometry(
+        dishProfile.map(([x, r]) => new THREE.Vector2(r, x)), 64);
+      dishGeometry.rotateZ(-Math.PI / 2);
+    }
     const rims = [];
     replacements.set(id, rims);
     for (const meshIndex of rimMeshIndices) {
@@ -142,13 +314,17 @@ function createCustomRims(THREE, targets, colors) {
       const hub = new THREE.Mesh(hubGeometry, material);
       hub.position.x = face;
       design.add(barrel, hub);
+      if (dishGeometry) design.add(new THREE.Mesh(dishGeometry, material));
       for (let i = 0; i < count; i++) {
-        const angle = i * Math.PI * 2 / count;
-        const spoke = new THREE.Mesh(spokeGeometry, material);
-        const distance = hubRadius + spokeLength / 2 - radius * 0.02;
-        spoke.position.set(face, Math.cos(angle) * distance, Math.sin(angle) * distance);
-        spoke.rotation.x = angle;
-        design.add(spoke);
+        // Cinco parejas separadas angularmente para distinguir los radios dobles.
+        for (const offset of paired ? [-0.11, 0.11] : [0]) {
+          const angle = i * Math.PI * 2 / count + offset;
+          const spoke = new THREE.Mesh(spokeGeometry, material);
+          const distance = hubRadius + spokeLength / 2 - radius * 0.02;
+          spoke.position.set(face, Math.cos(angle) * distance, Math.sin(angle) * distance);
+          spoke.rotation.x = angle;
+          design.add(spoke);
+        }
       }
       replacement.traverse((object) => {
         if (object.isMesh) object.castShadow = true;
@@ -240,6 +416,13 @@ function createGLBRimLoader(THREE, loader, targets, colors) {
 
 async function initializeViewer() {
   let renderer, controls, model, observer, textureLoader, floor, keyLight;
+  let tireStyles;
+  const changeTireStyle = (event) => {
+    if (!event.target.matches('input[name="tire"]')) return;
+    const assignments = tireStyles?.styles.get(event.target.value);
+    if (!assignments) return;
+    for (const [object, material] of assignments) object.material = material;
+  };
   const paintMaterials = new Set();
   let originalRimColors = new Map();
   let replacementRims = new Map();
@@ -302,6 +485,11 @@ async function initializeViewer() {
         for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
       }
     });
+    // Incluye variantes inactivas y mapas originales al liberar el visor.
+    for (const material of tireStyles?.materials ?? []) {
+      materials.add(material);
+      for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
+    }
     for (const geometry of geometries) geometry.dispose();
     for (const texture of textures) texture.dispose();
     for (const material of materials) material.dispose();
@@ -315,10 +503,12 @@ async function initializeViewer() {
     finishSelector.removeEventListener("change", changeFinish);
     rimSelector.removeEventListener("change", changeRimColor);
     rimDesignSelector.removeEventListener("change", changeRimDesign);
+    tireSelector.removeEventListener("change", changeTireStyle);
     paintSelector.disabled = true;
     finishSelector.disabled = true;
     rimSelector.disabled = true;
     rimDesignSelector.disabled = true;
+    tireSelector.disabled = true;
   }
   try {
     // El import map fija una misma versión para los módulos.
@@ -401,6 +591,15 @@ async function initializeViewer() {
       if (event.total) paintStatus.textContent = `Cargando CarConcept: ${Math.round(event.loaded / event.total * 100)} %`;
     });
     model = gltf.scene;
+    tireStyles = prepareTireStyles(THREE, gltf);
+    if (tireStyles) {
+      tireSelector.disabled = false;
+      tireSelector.addEventListener("change", changeTireStyle);
+      changeTireStyle({ target: tireSelector.querySelector("input:checked") });
+      tireStatus.textContent = "Deportivo: chevrones y flanco discreto; Semislick: surcos reducidos y letras blancas; Slick: banda lisa, letras y franja amarilla. Relieve simulado por textura, sin cambiar la geometría.";
+    } else {
+      tireStatus.textContent = "No se pudieron identificar los flancos y la rodadura con seguridad. Controles desactivados.";
+    }
     const rimMaterials = prepareRimMaterials(gltf);
     if (rimMaterials) {
       originalRimColors = rimMaterials.originals;

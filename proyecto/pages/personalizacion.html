@@ -67,6 +67,10 @@
           <label><input type="radio" name="rim-design" value="original" checked> Original</label>
           <label><input type="radio" name="rim-design" value="five-spoke"> 5 radios</label>
           <label><input type="radio" name="rim-design" value="multi-spoke"> Multirradio</label>
+          <label><input type="radio" name="rim-design" value="concave"> Cóncavas deportivas</label>
+          <label><input type="radio" name="rim-design" value="double-spoke"> Radios dobles</label>
+          <label><input type="radio" name="rim-design" value="deep-dish"> Deep Dish</label>
+          <label><input type="radio" name="rim-design" value="racing-six"> Racing 6 radios</label>
         </fieldset>
         <fieldset id="rim-selector" disabled aria-describedby="rim-status">
           <legend>COLOR DE LLANTAS</legend>
@@ -77,6 +81,15 @@
           <label><input type="radio" name="rim" value="gold"> Dorado</label>
         </fieldset>
         <p id="rim-status" role="status" aria-live="polite">Cargando llantas...</p>
+        <!-- Rodadura independiente del diseño y color de las llantas. -->
+        <fieldset id="tire-selector" disabled aria-describedby="tire-status">
+          <legend>NEUMÁTICOS</legend>
+          <label><input type="radio" name="tire" value="original" checked> Original</label>
+          <label><input type="radio" name="tire" value="sport"> Deportivo</label>
+          <label><input type="radio" name="tire" value="semislick"> Semislick</label>
+          <label><input type="radio" name="tire" value="slick"> Slick</label>
+        </fieldset>
+        <p id="tire-status" role="status" aria-live="polite">Cargando neumáticos...</p>
       </section>
     </main>
 
