@@ -9,7 +9,7 @@ const paintSelector = document.querySelector("#paint-selector");
 const paintStatus = document.querySelector("#paint-status");
 
 async function initializeViewer() {
-  let renderer, controls, model, observer, textureLoader;
+  let renderer, controls, model, observer, textureLoader, floor, keyLight;
   const paintMaterials = new Set();
   const changeColor = (event) => {
     if (event.target.matches('input[name="paint"]')) {
@@ -32,6 +32,9 @@ async function initializeViewer() {
     });
     for (const texture of textures) texture.dispose();
     for (const material of materials) material.dispose();
+    floor?.geometry.dispose();
+    floor?.material.dispose();
+    keyLight?.shadow.dispose();
     textureLoader?.dispose();
     renderer?.dispose();
     renderer?.domElement.remove();
@@ -49,11 +52,18 @@ async function initializeViewer() {
     scene.background = new THREE.Color("#151619");
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
     camera.position.set(4, 3, 5);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
-    const light = new THREE.DirectionalLight(0xffffff, 3);
-    light.position.set(4, 6, 3);
-    scene.add(light);
+    // Luz suave y acentos cálidos/fríos para destacar la carrocería.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    keyLight = new THREE.DirectionalLight(0xfff1da, 3);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    const fillLight = new THREE.DirectionalLight(0xc2d5ff, 1.1);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 2);
+    scene.add(keyLight, fillLight, rimLight);
     renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Solo la luz principal genera sombras suaves de coste moderado.
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.domElement.setAttribute("aria-label", "CarConcept, coche 3D de demostración: arrastra para rotar y usa la rueda para acercar");
     viewer.append(renderer.domElement);
     controls = new OrbitControls(camera, renderer.domElement);
@@ -64,7 +74,8 @@ async function initializeViewer() {
     function fitCamera() {
       const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
       const horizontal = Math.atan(Math.tan(halfFov) * camera.aspect);
-      const distance = radius / Math.sin(Math.min(halfFov, horizontal)) * 1.15;
+      // Acerca el coche conservando un margen alrededor de su esfera envolvente.
+      const distance = radius / Math.sin(Math.min(halfFov, horizontal)) * 1.08;
       const direction = camera.position.clone().sub(controls.target).normalize();
       camera.position.copy(direction.multiplyScalar(distance));
       controls.target.set(0, 0, 0);
@@ -103,18 +114,48 @@ async function initializeViewer() {
     // Lista explícita verificada en el GLB, sin seleccionar interiores por color.
     const paintNames = new Set(["Paint 1 Carmine", "Paint 2 Carmine"]);
     model.traverse((object) => {
-      if (!object.isMesh || !object.name.startsWith("Body")) return;
+      if (!object.isMesh) return;
+      object.castShadow = true;
+      if (!object.name.startsWith("Body")) return;
       for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
         if (paintNames.has(material.name)) paintMaterials.add(material);
       }
     });
     // Solo cambia color; conserva clearcoat, rugosidad, metal y texturas originales.
-    const bounds = new THREE.Box3().setFromObject(model);
+    const bounds = new THREE.Box3().setFromObject(model, true);
     if (bounds.isEmpty()) throw new Error("El modelo no contiene geometría visible");
     const center = bounds.getCenter(new THREE.Vector3());
     radius = bounds.getSize(new THREE.Vector3()).length() / 2;
     model.position.sub(center);
     scene.add(model);
+    // El mínimo del modelo centrado sitúa el suelo bajo las ruedas.
+    const floorY = bounds.min.y - center.y;
+    floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(radius * 12, radius * 12),
+      // Antracita mate: reduce reflejos del suelo sin bajar la luz del coche.
+      new THREE.MeshStandardMaterial({ color: 0x101114, roughness: 1, metalness: 0 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = floorY - radius * 0.0002;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Escala luces y cámara de sombras al tamaño real del coche.
+    keyLight.position.set(radius * 1.5, radius * 2.5, radius * 1.5);
+    fillLight.position.set(-radius * 2, radius, radius);
+    rimLight.position.set(radius, radius * 1.5, -radius * 2);
+    const shadowCamera = keyLight.shadow.camera;
+    shadowCamera.left = shadowCamera.bottom = -radius * 1.25;
+    shadowCamera.right = shadowCamera.top = radius * 1.25;
+    shadowCamera.near = radius * 0.1;
+    shadowCamera.far = radius * 7;
+    shadowCamera.updateProjectionMatrix();
+    // Menor separación y sesgo para reforzar el contacto bajo las ruedas.
+    keyLight.shadow.bias = -0.00005;
+    keyLight.shadow.normalBias = radius * 0.001;
+    // La escena es estática: recalcula sombras solo en el primer fotograma.
+    renderer.shadowMap.autoUpdate = false;
+    renderer.shadowMap.needsUpdate = true;
     const { width, height } = viewer.getBoundingClientRect();
     camera.aspect = width / Math.max(height, 1);
     fitCamera();
