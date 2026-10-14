@@ -16,6 +16,486 @@ const tireStatus = document.querySelector("#tire-status");
 const caliperSelector = document.querySelector("#caliper-selector");
 const discSelector = document.querySelector("#disc-selector");
 const brakeStatus = document.querySelector("#brake-status");
+const paintMaskDebug = document.querySelector("#paint-mask-debug");
+const originalPaintOption = paintSelector.querySelector('input[value="original"]');
+const uvEditor = document.querySelector("#bmw-uv-editor");
+
+// Lista blanca UV: vacía hasta validar paneles, bordes y vinilos sobre el BMW.
+// Cada región identifica meshId y points: [[u, v], ...], en las UV originales.
+const bmwPaintUVPolygons = [];
+
+function createBMWPaintAdapter(THREE, gltf) {
+  const json = gltf.parser.json;
+  const meshes = new Set([2, 16, 21, 33, 37]);
+  const targets = [];
+  if (json.materials[2]?.name !== "mMAT_Carpaint_Blue1" ||
+      json.materials[2]?.pbrMetallicRoughness?.baseColorTexture?.index !== 5) return null;
+  gltf.scene.traverse((object) => {
+    const association = gltf.parser.associations.get(object);
+    if (object.isMesh && meshes.has(association?.meshes) && association.primitives === 0 &&
+        object.material?.name === "mMAT_Carpaint_Blue1" && object.material.isMeshPhysicalMaterial &&
+        object.material.map?.isTexture && object.geometry.attributes.uv?.itemSize === 2) {
+      targets.push(object);
+    }
+  });
+  if (targets.length !== 5) return null;
+  const size = 1024;
+  const inside = (u, v, polygon) => {
+    let included = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [x, y] = polygon[i], [px, py] = polygon[j];
+      if ((y > v) !== (py > v) && u < (px - x) * (v - y) / (py - y) + x) included = !included;
+    }
+    return included;
+  };
+  const rasterizeMask = (data, polygons) => {
+    data.fill(0);
+    // Rasteriza solo las cajas de las regiones seleccionadas, sin recorrer todo el atlas por triángulo.
+    for (const polygon of polygons) {
+      const left = Math.max(0, Math.floor(Math.min(...polygon.map(([u]) => u)) * size));
+      const right = Math.min(size - 1, Math.ceil(Math.max(...polygon.map(([u]) => u)) * size));
+      const top = Math.max(0, Math.floor(Math.min(...polygon.map(([, v]) => v)) * size));
+      const bottom = Math.min(size - 1, Math.ceil(Math.max(...polygon.map(([, v]) => v)) * size));
+      for (let y = top; y <= bottom; y++) {
+        for (let x = left; x <= right; x++) {
+          if (inside((x + 0.5) / size, (y + 0.5) / size, polygon)) data.set([255, 255, 255, 255], (y * size + x) * 4);
+        }
+      }
+    }
+  };
+  const masks = new Map();
+  const originals = new Map(targets.map((object) => [object, object.material]));
+  const clones = new Map();
+  const states = [];
+  // Dibujar un borrador no equivale a validar que respeta los vinilos.
+  const ready = false;
+  let color = "original", finish = "original", debug = false;
+  for (const [object, source] of originals) {
+    const meshId = gltf.parser.associations.get(object).meshes;
+    const data = new Uint8Array(size * size * 4);
+    rasterizeMask(data, bmwPaintUVPolygons.filter((region) => region.meshId === meshId).map((region) => region.points));
+    const mask = new THREE.DataTexture(data, size, size);
+    // Material y máscara por malla: las UV compartidas no propagan la selección.
+    mask.magFilter = mask.minFilter = THREE.NearestFilter;
+    mask.needsUpdate = true;
+    masks.set(meshId, mask);
+    const material = source.clone();
+    const state = {
+      mask: { value: mask }, color: { value: new THREE.Color("#ffffff") },
+      paint: { value: 0 }, finish: { value: 0 }, debug: { value: 0 },
+      pbr: { value: new THREE.Vector4(source.roughness, source.metalness, source.clearcoat ?? 0, source.clearcoatRoughness ?? 0) },
+      originalCoat: { value: source.clearcoat ?? 0 }
+    };
+    // Activa el shader físico; el valor real del barniz se decide por zona UV.
+    material.clearcoat = 1;
+    material.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, {
+        bmwMask: state.mask, bmwColor: state.color, bmwPaint: state.paint,
+        bmwFinish: state.finish, bmwDebug: state.debug, bmwPBR: state.pbr, bmwOriginalCoat: state.originalCoat
+      });
+      shader.fragmentShader = `uniform sampler2D bmwMask;
+uniform vec3 bmwColor;
+uniform float bmwPaint, bmwFinish, bmwDebug, bmwOriginalCoat;
+uniform vec4 bmwPBR;
+` + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
+float bmwZone = texture2D(bmwMask, vMapUv).r;
+// Mezcla local: nunca multiplica toda la textura por material.color.
+diffuseColor.rgb = mix(diffuseColor.rgb, bmwColor, bmwZone * bmwPaint);
+if (bmwDebug > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb,
+  mix(vec3(0.6, 0.04, 0.04), vec3(0.05, 0.9, 0.15), bmwZone), 0.75);`);
+      shader.fragmentShader = shader.fragmentShader.replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>
+roughnessFactor = mix(roughnessFactor, bmwPBR.x, bmwZone * bmwFinish);
+metalnessFactor = mix(metalnessFactor, bmwPBR.y, bmwZone * bmwFinish);`);
+      shader.fragmentShader = shader.fragmentShader.replace("#include <lights_physical_fragment>", `
+if (bmwDebug > 0.5) { roughnessFactor = 0.8; metalnessFactor = 0.0; }
+#include <lights_physical_fragment>`);
+      shader.fragmentShader = shader.fragmentShader.replace("#include <lights_physical_fragment>", `#include <lights_physical_fragment>
+#ifdef USE_CLEARCOAT
+material.clearcoat = mix(bmwOriginalCoat, bmwPBR.z, bmwZone * bmwFinish);
+material.clearcoatRoughness = mix(material.clearcoatRoughness, bmwPBR.w, bmwZone * bmwFinish);
+#endif`);
+    };
+    material.customProgramCacheKey = () => "bmw-masked-paint-v1";
+    clones.set(object, material);
+    states.push(state);
+  }
+  const apply = () => {
+    const active = debug || color !== "original" || finish !== "original";
+    for (const [object, source] of originals) object.material = active ? clones.get(object) : source;
+  };
+  return {
+    ready, materials: new Set([...originals.values(), ...clones.values()]), textures: [...masks.values()],
+    originalTexture: targets[0].material.map,
+    uvMeshes: targets.map((object) => ({ id: gltf.parser.associations.get(object).meshes, name: object.name, geometry: object.geometry, object })),
+    previewMask(regions) {
+      // Solo actualiza el recurso existente; jamás habilita pintura o acabados.
+      for (const [meshId, mask] of masks) {
+        rasterizeMask(mask.image.data, regions.filter((region) => region.meshId === meshId).map((region) => region.points));
+        mask.needsUpdate = true;
+      }
+    },
+    setColor(value) {
+      if (value !== "original" && (!ready || !["#f2cb24", "#d92b30", "#246bdb", "#279650", "#ffffff", "#101010"].includes(value))) return;
+      color = value;
+      for (const state of states) {
+        state.paint.value = value === "original" ? 0 : 1;
+        if (value !== "original") state.color.value.set(value);
+      }
+      // Original restaura también el acabado y sale del modo de depuración.
+      if (value === "original") {
+        finish = "original";
+        debug = false;
+        for (const state of states) state.finish.value = state.debug.value = 0;
+      }
+      apply();
+    },
+    setFinish(value, definitions) {
+      if (value !== "original" && (!ready || !Object.hasOwn(definitions, value))) return;
+      finish = value;
+      for (const state of states) {
+        state.finish.value = value === "original" ? 0 : 1;
+        if (value !== "original") {
+          const properties = definitions[value];
+          state.pbr.value.set(properties.roughness, properties.metalness, properties.clearcoat, properties.clearcoatRoughness);
+        }
+      }
+      apply();
+    },
+    setDebug(value) {
+      debug = value;
+      for (const state of states) state.debug.value = value ? 1 : 0;
+      apply();
+    }
+  };
+}
+
+function setupBMWUVLayout() {
+  const workspace = document.querySelector("#bmw-uv-workspace");
+  const left = workspace.querySelector(".uv-3d-panel");
+  const right = workspace.querySelector(".uv-texture-panel");
+  const identity = document.querySelector("#uv-header-identity");
+  const moved = [];
+  const move = (node, destination) => {
+    // Conserva su lugar original para restaurar el taller al cerrar el visor.
+    const anchor = document.createComment("Posición habitual del taller");
+    node.before(anchor);
+    destination.append(node);
+    moved.push({ node, anchor });
+  };
+  document.body.classList.add("bmw-uv-layout");
+  move(document.querySelector("#panel-title"), identity);
+  move(document.querySelector("#vehicle-game"), identity);
+  identity.hidden = false;
+  move(viewer, left);
+  move(paintStatus, left);
+  move(paintMaskDebug.parentElement, left);
+  move(uvEditor, right);
+  workspace.hidden = false;
+  uvEditor.open = true;
+  // ResizeObserver ya adapta Three.js a las nuevas dimensiones del mismo visor.
+  const frame = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  return () => {
+    cancelAnimationFrame(frame);
+    for (const { node, anchor } of moved) {
+      anchor.replaceWith(node);
+    }
+    workspace.hidden = true;
+    identity.hidden = true;
+    document.body.classList.remove("bmw-uv-layout");
+  };
+}
+
+function setupBMWUVEditor(adapter, view3D = {}) {
+  const canvas = uvEditor.querySelector("canvas");
+  const context = canvas.getContext("2d");
+  const meshSelector = uvEditor.querySelector('[name="uv-mesh"]');
+  const mode = uvEditor.querySelector('[name="uv-mode"]');
+  const showUVs = uvEditor.querySelector('[name="uv-wireframe"]');
+  const status = uvEditor.querySelector('[data-uv="status"]');
+  const coordinates = uvEditor.querySelector('[data-uv="coordinates"]');
+  const output = uvEditor.querySelector("textarea");
+  const close = uvEditor.querySelector('[data-uv="close"]');
+  const undo = uvEditor.querySelector('[data-uv="undo"]');
+  const clear = uvEditor.querySelector('[data-uv="clear"]');
+  if (!context) return () => {};
+  const image = adapter.originalTexture.image;
+  canvas.width = image.width;
+  canvas.height = image.height;
+  let polygons = bmwPaintUVPolygons.map((region) => ({ meshId: region.meshId, points: region.points.map((point) => [...point]) }));
+  let selectedTriangles = [];
+  let pending = [];
+  let pendingMeshId = null;
+  const history = [];
+  const listeners = [];
+  const overlays = new Map();
+  // Triángulos reales, indexados o no; conserva el número de cara de cada malla.
+  const triangles = new Map(adapter.uvMeshes.map((mesh) => {
+    const { uv, position } = mesh.geometry.attributes;
+    const indices = mesh.geometry.index;
+    const faces = [];
+    for (let offset = 0; offset < (indices?.count ?? position.count); offset += 3) {
+      const points = [0, 1, 2].map((corner) => {
+        const vertex = indices ? indices.getX(offset + corner) : offset + corner;
+        return [uv.getX(vertex), uv.getY(vertex)];
+      });
+      faces.push({ id: offset / 3, points });
+    }
+    return [mesh.id, faces];
+  }));
+  const includesPoint = (points, [u, v]) => {
+    const [[ax, ay], [bx, by], [cx, cy]] = points;
+    const area = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+    if (Math.abs(area) < 1e-12) return false;
+    const a = ((bx - u) * (cy - v) - (by - v) * (cx - u)) / area;
+    const b = ((cx - u) * (ay - v) - (cy - v) * (ax - u)) / area;
+    return a >= -1e-9 && b >= -1e-9 && 1 - a - b >= -1e-9;
+  };
+  const listen = (element, type, handler) => {
+    element.addEventListener(type, handler);
+    listeners.push(() => element.removeEventListener(type, handler));
+  };
+  const snapshot = () => history.push(JSON.stringify({ polygons, selectedTriangles, pending, pendingMeshId }));
+  meshSelector.replaceChildren();
+  for (const [value, label] of [["all", "Todas las mallas"],
+    ...adapter.uvMeshes.map((mesh) => [String(mesh.id), mesh.name])]) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    meshSelector.append(option);
+  }
+  const drawPath = (points, closed) => {
+    if (!points.length) return;
+    context.beginPath();
+    points.forEach(([u, v], i) => {
+      // Mapas GLTF flipY=false: V=0 coincide con la fila superior del PNG.
+      if (i === 0) context.moveTo(u * canvas.width, v * canvas.height);
+      else context.lineTo(u * canvas.width, v * canvas.height);
+    });
+    if (closed) {
+      context.closePath();
+      context.fill();
+    }
+    context.stroke();
+  };
+  const draw = () => {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    // Cuadrícula UV con valores de 0 a 1, independiente de los colores de la imagen.
+    context.strokeStyle = "rgba(255,255,255,0.35)";
+    context.fillStyle = "#ffffff";
+    context.lineWidth = 1;
+    context.font = "14px sans-serif";
+    for (let i = 0; i <= 10; i++) {
+      const u = i / 10;
+      context.beginPath();
+      context.moveTo(u * canvas.width, 0);
+      context.lineTo(u * canvas.width, canvas.height);
+      context.moveTo(0, u * canvas.height);
+      context.lineTo(canvas.width, u * canvas.height);
+      context.stroke();
+      context.fillText(u.toFixed(1), Math.min(canvas.width - 24, u * canvas.width + 3), 16);
+      if (i > 0) context.fillText(u.toFixed(1), 3, Math.min(canvas.height - 4, u * canvas.height));
+    }
+    if (showUVs.checked) {
+      const key = meshSelector.value;
+      if (!overlays.has(key)) {
+        // Cachea los triángulos UV: no vuelve a recorrer geometrías en cada clic.
+        const overlay = document.createElement("canvas");
+        overlay.width = canvas.width;
+        overlay.height = canvas.height;
+        const wire = overlay.getContext("2d");
+        wire.strokeStyle = "rgba(70,220,255,0.4)";
+        wire.lineWidth = 0.6;
+        wire.beginPath();
+        const meshes = key === "all" ? adapter.uvMeshes : adapter.uvMeshes.filter((mesh) => mesh.id === Number(key));
+        for (const mesh of meshes) {
+          const { uv, position } = mesh.geometry.attributes;
+          const indices = mesh.geometry.index;
+          for (let triangle = 0; triangle < (indices?.count ?? position.count); triangle += 3) {
+            for (let corner = 0; corner < 3; corner++) {
+              const vertex = indices ? indices.getX(triangle + corner) : triangle + corner;
+              const x = uv.getX(vertex) * canvas.width, y = uv.getY(vertex) * canvas.height;
+              if (corner === 0) wire.moveTo(x, y);
+              else wire.lineTo(x, y);
+            }
+            wire.closePath();
+          }
+        }
+        wire.stroke();
+        overlays.set(key, overlay);
+      }
+      context.drawImage(overlays.get(key), 0, 0);
+    }
+    context.lineWidth = 3;
+    context.strokeStyle = "#38ef72";
+    context.fillStyle = "rgba(56,239,114,0.25)";
+    const visibleMesh = (id) => meshSelector.value === "all" || Number(meshSelector.value) === id;
+    for (const region of polygons) if (visibleMesh(region.meshId)) drawPath(region.points, true);
+    context.fillStyle = "rgba(56,239,114,0.65)";
+    for (const selected of selectedTriangles) {
+      if (visibleMesh(selected.meshId)) drawPath(triangles.get(selected.meshId)[selected.triangleId].points, true);
+    }
+    context.strokeStyle = "#f2cb24";
+    if (visibleMesh(pendingMeshId)) drawPath(pending, false);
+    context.fillStyle = "#f2cb24";
+    for (const [u, v] of visibleMesh(pendingMeshId) ? pending : []) {
+      context.beginPath();
+      context.arc(u * canvas.width, v * canvas.height, 5, 0, Math.PI * 2);
+      context.fill();
+    }
+    close.disabled = mode.value !== "polygons" || pending.length < 3;
+    undo.disabled = history.length === 0;
+    clear.disabled = polygons.length === 0 && selectedTriangles.length === 0 && pending.length === 0;
+    output.value = JSON.stringify({ version: 2, polygons, triangles: selectedTriangles }, null, 2);
+    status.textContent = `${polygons.length} polígonos cerrados; ${selectedTriangles.length} triángulos seleccionados; ${pending.length} vértices pendientes. Elige una malla concreta para editar. Borrador sin validar: pintura y acabados bloqueados.`;
+  };
+  const preview = () => {
+    const regions = [...polygons, ...selectedTriangles.map((selected) => ({
+      meshId: selected.meshId, points: triangles.get(selected.meshId)[selected.triangleId].points
+    }))];
+    adapter.previewMask(regions);
+    adapter.setDebug(true);
+    paintMaskDebug.checked = true;
+    draw();
+  };
+  const toggleTriangle = (meshId, triangleId) => {
+    const face = triangles.get(meshId)?.[triangleId];
+    if (!face) return;
+    snapshot();
+    const existing = selectedTriangles.findIndex((selected) => selected.meshId === meshId && selected.triangleId === triangleId);
+    if (existing === -1) selectedTriangles.push({ meshId, triangleId });
+    else selectedTriangles.splice(existing, 1);
+    // Sincroniza el desplegable y la cara UV con la pieza pulsada en 3D.
+    meshSelector.value = String(meshId);
+    preview();
+    const center = face.points.reduce((sum, [u, v]) => [sum[0] + u / 3, sum[1] + v / 3], [0, 0]);
+    const overlap = triangles.get(meshId).some((other) => other.id !== triangleId && includesPoint(other.points, center));
+    if (overlap) status.textContent += " Aviso: otras caras de esta malla comparten la zona UV; la máscara puede resaltarlas aunque no estén seleccionadas.";
+  };
+  if (view3D.THREE && view3D.domElement) {
+    const { THREE, camera, model, domElement } = view3D;
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const paintMeshes = new Map(adapter.uvMeshes.map((mesh) => [mesh.object, mesh.id]));
+    const gestures = new Map();
+    listen(domElement, "pointerdown", (event) => {
+      const gesture = { x: event.clientX, y: event.clientY, moved: false,
+        blocked: event.button !== 0 || event.isPrimary === false || gestures.size > 0 };
+      if (gestures.size) for (const active of gestures.values()) active.blocked = true;
+      gestures.set(event.pointerId, gesture);
+    });
+    listen(domElement, "pointermove", (event) => {
+      const gesture = gestures.get(event.pointerId);
+      if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 5) gesture.moved = true;
+    });
+    listen(domElement, "pointercancel", (event) => gestures.delete(event.pointerId));
+    listen(domElement, "pointerup", (event) => {
+      const gesture = gestures.get(event.pointerId);
+      gestures.delete(event.pointerId);
+      if (mode.value !== "three-d" || !gesture || gesture.blocked || gesture.moved ||
+          Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 5) return;
+      // No captura ni detiene eventos: OrbitControls mantiene rotación y zoom.
+      const bounds = domElement.getBoundingClientRect();
+      if (!bounds.width || !bounds.height) return;
+      pointer.set((event.clientX - bounds.left) / bounds.width * 2 - 1,
+        -(event.clientY - bounds.top) / bounds.height * 2 + 1);
+      model.updateWorldMatrix(true, true);
+      camera.updateMatrixWorld();
+      raycaster.setFromCamera(pointer, camera);
+      // Consulta la primera superficie de todo el coche: no atraviesa piezas excluidas.
+      const hit = raycaster.intersectObject(model, true)[0];
+      const meshId = hit && paintMeshes.get(hit.object);
+      const material = hit && (Array.isArray(hit.object.material)
+        ? hit.object.material[hit.face?.materialIndex ?? -1] : hit.object.material);
+      if (meshId === undefined || material?.name !== "mMAT_Carpaint_Blue1" ||
+          !Number.isInteger(hit.faceIndex) || !triangles.get(meshId)?.[hit.faceIndex]) {
+        status.textContent = "Esta superficie no es pintura editable: ruedas, cristales, carbono, logotipos y detalles quedan excluidos.";
+        return;
+      }
+      toggleTriangle(meshId, hit.faceIndex);
+    });
+    listeners.push(() => gestures.clear());
+  }
+  const pointFromEvent = (event) => {
+    const bounds = canvas.getBoundingClientRect();
+    return [Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)),
+      Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height))];
+  };
+  listen(canvas, "pointermove", (event) => {
+    const [u, v] = pointFromEvent(event);
+    coordinates.textContent = `U: ${u.toFixed(4)} · V: ${v.toFixed(4)}`;
+  });
+  listen(canvas, "click", (event) => {
+    if (mode.value === "three-d") {
+      status.textContent = "Seleccionar en 3D: haz clic sobre la carrocería del BMW; arrastra para girarlo.";
+      return;
+    }
+    // Todas las mallas es solo una vista; nunca selecciona otras UV superpuestas.
+    if (meshSelector.value === "all") {
+      status.textContent = "Selecciona una malla concreta en el desplegable antes de editar.";
+      return;
+    }
+    const meshId = Number(meshSelector.value);
+    const point = pointFromEvent(event);
+    if (mode.value === "triangles") {
+      const hits = triangles.get(meshId).filter((face) => includesPoint(face.points, point));
+      if (!hits.length) {
+        status.textContent = "No hay ningún triángulo UV de esta malla bajo el punto seleccionado.";
+        return;
+      }
+      // Si la propia malla solapa caras, escoge solo la primera; no todas.
+      const triangleId = hits[0].id;
+      toggleTriangle(meshId, triangleId);
+      if (hits.length > 1) status.textContent += " Hay caras solapadas en esta misma malla: el clic alterna la primera; la máscara UV no distingue caras con UV idénticas.";
+      return;
+    }
+    if (pending.length && pendingMeshId !== meshId) {
+      status.textContent = "Cierra o deshaz el polígono pendiente en su malla antes de dibujar en otra.";
+      return;
+    }
+    snapshot();
+    pendingMeshId = meshId;
+    pending.push(point);
+    draw();
+  });
+  listen(close, "click", () => {
+    if (pending.length < 3) return;
+    snapshot();
+    polygons.push({ meshId: pendingMeshId, points: pending });
+    pending = [];
+    pendingMeshId = null;
+    preview();
+  });
+  listen(undo, "click", () => {
+    if (!history.length) return;
+    ({ polygons, selectedTriangles, pending, pendingMeshId } = JSON.parse(history.pop()));
+    preview();
+  });
+  listen(clear, "click", () => {
+    snapshot();
+    polygons = [];
+    selectedTriangles = [];
+    pending = [];
+    pendingMeshId = null;
+    preview();
+  });
+  listen(meshSelector, "change", draw);
+  listen(mode, "change", () => {
+    draw();
+    view3D.domElement?.classList.toggle("uv-picking", mode.value === "three-d");
+    if (mode.value === "three-d") status.textContent = "Seleccionar en 3D: clic para alternar una cara; arrastre para girar y rueda o gesto de pinza para zoom.";
+  });
+  listen(showUVs, "change", draw);
+  draw();
+  return () => {
+    for (const remove of listeners) remove();
+    overlays.clear();
+    triangles.clear();
+    view3D.domElement?.classList.remove("uv-picking");
+    uvEditor.hidden = true;
+  };
+}
 
 function createDiscShape(THREE, innerRadius, drilled, slotted) {
   const shape = new THREE.Shape();
@@ -640,6 +1120,7 @@ const customizationProfiles = new Map([
   // Perfil inicial de visualización: sin adaptadores de personalización todavía.
   ["bmw-m3-gtr", {
     prepareModel: prepareBMWModel,
+    preparePaint: createBMWPaintAdapter,
     // Tres cuartos delantero más bajo: evita alejar el coche para encajar su altura.
     framing: { position: [6, 1, 5], widthOccupancy: 0.72, minZoom: 0.45, maxZoom: 3 }
   }]
@@ -648,6 +1129,10 @@ const customizationProfiles = new Map([
 function disableCustomization(message) {
   for (const selector of [paintSelector, finishSelector, rimSelector, rimDesignSelector,
     tireSelector, caliperSelector, discSelector]) selector.disabled = true;
+  paintMaskDebug.disabled = true;
+  paintMaskDebug.checked = false;
+  paintMaskDebug.parentElement.hidden = true;
+  uvEditor.hidden = true;
   for (const status of [rimStatus, tireStatus, brakeStatus]) status.textContent = message;
 }
 
@@ -659,6 +1144,10 @@ async function initializeViewer(car) {
   let renderer, controls, model, observer, textureLoader, floor, keyLight;
   let tireStyles;
   let brakeStyles;
+  let paintAdapter;
+  let disposeUVEditor;
+  let disposeUVLayout;
+  const changePaintMaskDebug = () => paintAdapter?.setDebug(paintMaskDebug.checked);
   const changeCaliperColor = (event) => {
     if (event.target.matches('input[name="caliper"]')) {
       applyBrakeStyle(brakeStyles?.caliperStyles, event.target.value);
@@ -706,6 +1195,14 @@ async function initializeViewer(car) {
   };
   const changeColor = (event) => {
     if (event.target.matches('input[name="paint"]')) {
+      if (paintAdapter) {
+        paintAdapter.setColor(event.target.value);
+        if (event.target.value === "original") {
+          paintMaskDebug.checked = false;
+          finishSelector.querySelector('input[value="original"]').checked = true;
+        }
+        return;
+      }
       for (const material of paintMaterials) material.color.set(event.target.value);
     }
   };
@@ -713,6 +1210,10 @@ async function initializeViewer(car) {
     if (!event.target.matches('input[name="finish"]')) return;
     const name = event.target.value;
     if (name !== "original" && !Object.hasOwn(finishes, name)) return;
+    if (paintAdapter) {
+      paintAdapter.setFinish(name, finishes);
+      return;
+    }
     for (const material of paintMaterials) {
       const original = originalFinishes.get(material);
       // Cada acabado parte del original; no acumula cambios ni altera texturas o color.
@@ -725,6 +1226,8 @@ async function initializeViewer(car) {
     }
   };
   function dispose() {
+    disposeUVEditor?.();
+    disposeUVLayout?.();
     renderer?.setAnimationLoop(null);
     observer?.disconnect();
     controls?.dispose();
@@ -748,6 +1251,11 @@ async function initializeViewer(car) {
       materials.add(material);
       for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
     }
+    for (const material of paintAdapter?.materials ?? []) {
+      materials.add(material);
+      for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
+    }
+    for (const texture of paintAdapter?.textures ?? []) textures.add(texture);
     for (const geometry of geometries) geometry.dispose();
     for (const texture of textures) texture.dispose();
     for (const material of materials) material.dispose();
@@ -764,6 +1272,8 @@ async function initializeViewer(car) {
     tireSelector.removeEventListener("change", changeTireStyle);
     caliperSelector.removeEventListener("change", changeCaliperColor);
     discSelector.removeEventListener("change", changeDiscFinish);
+    paintMaskDebug.removeEventListener("change", changePaintMaskDebug);
+    paintMaskDebug.disabled = true;
     paintSelector.disabled = true;
     finishSelector.disabled = true;
     rimSelector.disabled = true;
@@ -881,6 +1391,7 @@ async function initializeViewer(car) {
     });
     model = gltf.scene;
     if (profile.prepareModel) model = profile.prepareModel(THREE, model);
+    paintAdapter = profile.preparePaint?.(THREE, gltf);
     brakeStyles = profile.prepareBrakes?.(THREE, gltf);
     if (brakeStyles) {
       caliperSelector.disabled = false;
@@ -1014,6 +1525,32 @@ async function initializeViewer(car) {
       paintStatus.textContent = `Modelo 3D de ${car.title} cargado. Usa las opciones disponibles, arrastra para rotar y usa la rueda o un gesto de pinza para hacer zoom.`;
     } else {
       paintStatus.textContent = `Modelo 3D de ${car.title} cargado. Este perfil no ofrece pintura compatible; arrastra para rotar y usa la rueda para hacer zoom.`;
+    }
+    originalPaintOption.parentElement.hidden = !profile.preparePaint;
+    if (paintAdapter) {
+      // Solo Original hasta validar la lista blanca UV; el depurador sí está disponible.
+      paintSelector.disabled = finishSelector.disabled = false;
+      for (const input of paintSelector.querySelectorAll("input")) input.disabled = input.value !== "original" && !paintAdapter.ready;
+      for (const input of finishSelector.querySelectorAll("input")) input.disabled = input.value !== "original" && !paintAdapter.ready;
+      originalPaintOption.checked = true;
+      finishSelector.querySelector('input[value="original"]').checked = true;
+      paintSelector.addEventListener("change", changeColor);
+      finishSelector.addEventListener("change", changeFinish);
+      // Herramienta solo para el BMW y bajo activación explícita en la URL.
+      const uvDebugMode = model3d.profile === "bmw-m3-gtr" &&
+        new URLSearchParams(window.location.search).get("uvdebug") === "1";
+      paintMaskDebug.parentElement.hidden = !uvDebugMode;
+      paintMaskDebug.disabled = false;
+      paintMaskDebug.checked = false;
+      paintMaskDebug.addEventListener("change", changePaintMaskDebug);
+      if (uvDebugMode) {
+        uvEditor.hidden = false;
+        disposeUVLayout = setupBMWUVLayout();
+        disposeUVEditor = setupBMWUVEditor(paintAdapter, { THREE, camera, model, domElement: renderer.domElement });
+      }
+      paintStatus.textContent = paintAdapter.ready
+        ? "Pintura limitada a las zonas UV validadas. Depuración: verde repintable, rojo excluido."
+        : "BMW Original conservado. Color y acabados pendientes de validar paneles plateados y bordes en UV. Depuración de máscara: rojo excluido; todavía no hay zonas verdes repintables.";
     }
     // Un único bucle de renderizado y actualización de controles.
     renderer.setAnimationLoop(() => {

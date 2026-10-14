@@ -100,6 +100,67 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); }
 .car-viewer { width: 100%; height: clamp(240px, 50vw, 480px); margin-top: 20px; background: #151619; overflow: hidden; }
 .car-viewer canvas { display: block; width: 100%; height: 100%; }
 [hidden] { display: none !important; }
+/* Editor UV de depuración, adaptable al visor y separado de los controles normales. */
+#bmw-uv-editor { margin-top: 20px; padding: 18px; border: 1px solid var(--accent); }
+#bmw-uv-editor summary { color: var(--accent); font-weight: 800; cursor: pointer; }
+#bmw-uv-editor p { color: var(--muted); line-height: 1.6; }
+#bmw-uv-editor canvas { display: block; width: 100%; height: auto; cursor: crosshair; }
+#bmw-uv-editor select, #bmw-uv-editor textarea { width: 100%; padding: 8px; background: #151619; color: var(--muted); border: 1px solid #505156; }
+#bmw-uv-editor textarea { display: block; margin-top: 8px; font-family: monospace; }
+.uv-editor-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 14px; }
+.uv-editor-actions button { padding: 10px 14px; background: #302b19; border: 1px solid var(--accent); color: var(--accent); cursor: pointer; }
+.uv-editor-actions button:disabled { opacity: 0.5; cursor: default; }
+#bmw-uv-editor :is(button, select, textarea, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* Distribución exclusiva del BMW con uvdebug=1; el taller normal no cambia. */
+.bmw-uv-layout { height: 100dvh; overflow: hidden; }
+.bmw-uv-layout :is(.workshop-header, .workshop, .workshop-footer) { width: 100%; padding-inline: 16px; }
+.bmw-uv-layout .workshop-header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 20px; flex: 0 0 64px; padding-block: 8px; }
+.bmw-uv-layout .brand { margin: 0; font-size: 0.65rem; }
+.bmw-uv-layout #uv-header-identity { min-width: 0; }
+.bmw-uv-layout #uv-header-identity h2 { margin: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bmw-uv-layout #uv-header-identity p { margin: 4px 0 0; font-size: 0.65rem; overflow-wrap: anywhere; }
+.bmw-uv-layout .back-link { padding: 8px 10px; font-size: 0.65rem; }
+.bmw-uv-layout .workshop { min-height: 0; padding-block: 0 12px; }
+.bmw-uv-layout .workshop-panel { height: 100%; margin: 0; padding: 0; border: 0; }
+.bmw-uv-layout .workshop > :is(.eyebrow, h1, .intro),
+.bmw-uv-layout .workshop-panel > :not(#bmw-uv-workspace),
+.bmw-uv-layout .workshop-footer { display: none; }
+.bmw-uv-layout #bmw-uv-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  margin: 0;
+  z-index: 1;
+  background: #1b1c1f;
+}
+.bmw-uv-layout :is(.uv-3d-panel, .uv-texture-panel) { min-width: 0; min-height: 0; }
+.bmw-uv-layout .uv-3d-panel { display: flex; flex-direction: column; padding: 14px; border: 1px solid #505156; background: #151619; }
+.bmw-uv-layout .uv-3d-panel h3 { margin: 0 0 12px; color: var(--accent); font-size: 0.85rem; letter-spacing: 0.08em; }
+.bmw-uv-layout .uv-3d-panel .car-viewer { flex: 1; min-height: 0; height: auto; margin: 0; }
+.bmw-uv-layout .car-viewer canvas.uv-picking { cursor: crosshair; }
+.bmw-uv-layout .uv-3d-panel #paint-status { margin-block: 12px; max-height: 100px; overflow: auto; }
+.bmw-uv-layout .uv-3d-panel > label { font-size: 0.8rem; }
+.bmw-uv-layout #bmw-uv-editor { height: 100%; margin: 0; padding: 14px; overflow: auto; scrollbar-gutter: stable; }
+.bmw-uv-layout #bmw-uv-editor > summary { font-size: 0.85rem; margin-bottom: 10px; }
+.bmw-uv-layout #bmw-uv-editor > label { display: block; margin-block: 8px; }
+.bmw-uv-layout #bmw-uv-editor > label:has(select) { display: inline-grid; width: calc(50% - 6px); vertical-align: top; margin-block: 4px; font-size: 0.8rem; }
+.bmw-uv-layout #bmw-uv-editor select { min-width: 0; }
+.bmw-uv-layout #bmw-uv-editor p { margin-block: 8px; font-size: 0.8rem; }
+.bmw-uv-layout #bmw-uv-editor canvas { width: min(100%, max(240px, calc(100dvh - 305px))); height: auto; aspect-ratio: 1; margin-inline: auto; }
+.bmw-uv-layout #bmw-uv-editor :is(.uv-editor-help, .uv-editor-export) summary { font-size: 0.8rem; }
+.bmw-uv-layout .uv-editor-actions { margin-block: 8px; gap: 6px; }
+.bmw-uv-layout .uv-editor-actions button { padding: 8px 10px; font-size: 0.8rem; }
+@media (max-width: 900px) {
+  .bmw-uv-layout { height: auto; min-height: 100dvh; overflow: visible; }
+  .bmw-uv-layout .workshop-header { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .bmw-uv-layout .brand { display: none; }
+  .bmw-uv-layout .workshop-panel { height: auto; }
+  .bmw-uv-layout #bmw-uv-workspace { grid-template-columns: minmax(0, 1fr); height: auto; position: static; }
+  .bmw-uv-layout .uv-3d-panel .car-viewer { flex: none; height: clamp(260px, 60vw, 480px); }
+  .bmw-uv-layout #bmw-uv-editor { height: auto; overflow: visible; }
+  .bmw-uv-layout #bmw-uv-editor canvas { width: 100%; }
+}
 :is(#paint-status, #rim-status, #tire-status, #brake-status) { color: var(--muted); line-height: 1.6; }
 #paint-selector { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; padding: 18px; border: 1px solid #343539; }
 #paint-selector legend { color: var(--accent); font-weight: 800; }

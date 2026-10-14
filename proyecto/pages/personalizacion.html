@@ -20,6 +20,7 @@
   <body>
     <header class="workshop-header">
       <p class="brand">NEED FOR SPEED <span>TUNING GARAGE</span></p>
+      <div id="uv-header-identity" hidden></div>
       <a class="back-link" href="/">← VOLVER AL CATÁLOGO</a>
     </header>
 
@@ -40,10 +41,16 @@
           <p id="vehicle-image-status" hidden>Imagen no disponible.</p>
         </div>
         <!-- El visor solo carga el GLB asociado al vehículo seleccionado. -->
+        <!-- En depuración aloja los mismos nodos del visor y editor, sin duplicarlos. -->
+        <section id="bmw-uv-workspace" hidden aria-label="BMW 3D y editor UV">
+          <div class="uv-3d-panel"><h3>BMW · PREVISUALIZACIÓN 3D</h3></div>
+          <div class="uv-texture-panel"></div>
+        </section>
         <div id="car-viewer" class="car-viewer" hidden></div>
         <p id="paint-status" role="status" aria-live="polite">Comprobando disponibilidad del modelo 3D...</p>
         <fieldset id="paint-selector" disabled aria-describedby="paint-status">
           <legend>PINTURA</legend>
+          <label hidden><input type="radio" name="paint" value="original"> Original</label>
           <label><input type="radio" name="paint" value="#f2cb24" checked> Amarillo</label>
           <label><input type="radio" name="paint" value="#d92b30"> Rojo</label>
           <label><input type="radio" name="paint" value="#246bdb"> Azul</label>
@@ -51,6 +58,38 @@
           <label><input type="radio" name="paint" value="#ffffff"> Blanco</label>
           <label><input type="radio" name="paint" value="#101010"> Negro</label>
         </fieldset>
+        <label hidden><input id="paint-mask-debug" type="checkbox" disabled> DEPURACIÓN: visualizar máscara UV (verde repintable, rojo excluido)</label>
+        <details id="bmw-uv-editor" hidden open>
+          <summary>DEPURACIÓN BMW · EDITOR DE MÁSCARA UV</summary>
+          <details class="uv-editor-help">
+            <summary>Instrucciones y coordenadas</summary>
+          <p>Elige una malla concreta y un modo. Dibuja vértices y cierra el polígono, o haz clic en un triángulo UV para seleccionarlo o quitarlo. En el coche: verde incluido, rojo excluido. Revisa ambos lados y evita franjas, bordes y logotipos.</p>
+          <p>Coordenadas del PNG original: U=0 izquierda, U=1 derecha; V=0 arriba, V=1 abajo. No se modifica la textura.</p>
+          </details>
+          <label>Modo <select name="uv-mode" aria-label="Modo de selección UV">
+            <option value="polygons">Dibujar polígonos</option>
+            <option value="triangles">Seleccionar triángulos UV</option>
+            <option value="three-d">Seleccionar en 3D</option>
+          </select></label>
+          <p>En «Seleccionar en 3D», pulsa la carrocería para alternar una cara y localizarla en UV. Arrastra para rotar; rueda o gesto de pinza para zoom.</p>
+          <label>Mallas UV <select name="uv-mesh" aria-label="Malla cuyas UV se muestran"></select></label>
+          <label><input type="checkbox" name="uv-wireframe" checked> Mostrar triángulos UV</label>
+          <p data-uv="coordinates">U: — · V: —</p>
+          <canvas aria-label="Textura original del BMW y polígonos UV; haz clic para marcar vértices"></canvas>
+          <div class="uv-editor-actions">
+            <button type="button" data-uv="close" disabled>Cerrar polígono y previsualizar</button>
+            <button type="button" data-uv="undo" disabled>Deshacer</button>
+            <button type="button" data-uv="clear" disabled>Limpiar</button>
+          </div>
+          <p data-uv="status" role="status" aria-live="polite"></p>
+          <details class="uv-editor-export">
+            <summary>Exportar borrador JSON</summary>
+          <label>Selección por malla del borrador (JSON para copiar)
+            <textarea readonly rows="6" aria-label="Polígonos y triángulos UV por malla en JSON"></textarea>
+          </label>
+          <p>El borrador solo vive en esta sesión. Copia el JSON antes de salir. Dibujarlo no lo valida ni habilita colores o acabados; debe revisarse antes de incorporarlo a la máscara definitiva.</p>
+          </details>
+        </details>
         <!-- El acabado original mantiene la apariencia inicial del modelo. -->
         <fieldset id="finish-selector" disabled aria-describedby="paint-status">
           <legend>ACABADO</legend>
