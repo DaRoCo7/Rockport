@@ -100,7 +100,7 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); }
 .car-viewer { width: 100%; height: clamp(240px, 50vw, 480px); margin-top: 20px; background: #151619; overflow: hidden; }
 .car-viewer canvas { display: block; width: 100%; height: 100%; }
 [hidden] { display: none !important; }
-:is(#paint-status, #rim-status, #tire-status) { color: var(--muted); line-height: 1.6; }
+:is(#paint-status, #rim-status, #tire-status, #brake-status) { color: var(--muted); line-height: 1.6; }
 #paint-selector { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; padding: 18px; border: 1px solid #343539; }
 #paint-selector legend { color: var(--accent); font-weight: 800; }
 #paint-selector label { display: flex; align-items: center; gap: 6px; }
@@ -109,14 +109,14 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); }
 #paint-selector input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* Acabados en botones compactos, con selección y foco visibles. */
-:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector) { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 18px; border: 1px solid #343539; }
-:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector) legend { color: var(--accent); font-weight: 800; }
-:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector) label { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #505156; font-weight: 700; cursor: pointer; }
-:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector) label:has(input:checked) { color: var(--accent); border-color: var(--accent); background: #302b19; }
-:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector) label:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
-:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector) input { accent-color: var(--accent); }
-:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector):disabled { opacity: 0.55; }
-:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector):disabled label { cursor: default; }
+:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector, #caliper-selector, #disc-selector) { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 18px; border: 1px solid #343539; }
+:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector, #caliper-selector, #disc-selector) legend { color: var(--accent); font-weight: 800; }
+:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector, #caliper-selector, #disc-selector) label { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #505156; font-weight: 700; cursor: pointer; }
+:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector, #caliper-selector, #disc-selector) label:has(input:checked) { color: var(--accent); border-color: var(--accent); background: #302b19; }
+:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector, #caliper-selector, #disc-selector) label:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector, #caliper-selector, #disc-selector) input { accent-color: var(--accent); }
+:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector, #caliper-selector, #disc-selector):disabled { opacity: 0.55; }
+:is(#finish-selector, #rim-selector, #rim-design-selector, #tire-selector, #caliper-selector, #disc-selector):disabled label { cursor: default; }
 
 /* Ajustes básicos para pantallas pequeñas. */
 @media (max-width: 600px) {

@@ -90,6 +90,25 @@
           <label><input type="radio" name="tire" value="slick"> Slick</label>
         </fieldset>
         <p id="tire-status" role="status" aria-live="polite">Cargando neumáticos...</p>
+        <!-- Pinzas y discos se personalizan de forma independiente. -->
+        <h3>FRENOS</h3>
+        <fieldset id="caliper-selector" disabled aria-describedby="brake-status">
+          <legend>COLOR DE PINZAS</legend>
+          <label><input type="radio" name="caliper" value="original" checked> Original</label>
+          <label><input type="radio" name="caliper" value="red"> Rojo</label>
+          <label><input type="radio" name="caliper" value="yellow"> Amarillo</label>
+          <label><input type="radio" name="caliper" value="blue"> Azul</label>
+          <label><input type="radio" name="caliper" value="black"> Negro</label>
+          <label><input type="radio" name="caliper" value="gold"> Dorado</label>
+        </fieldset>
+        <fieldset id="disc-selector" disabled aria-describedby="brake-status">
+          <legend>ACABADO DE DISCOS</legend>
+          <label><input type="radio" name="disc" value="original" checked> Original</label>
+          <label><input type="radio" name="disc" value="drilled"> Perforado</label>
+          <label><input type="radio" name="disc" value="slotted"> Ranurado</label>
+          <label><input type="radio" name="disc" value="drilled-slotted"> Perforado + Ranurado</label>
+        </fieldset>
+        <p id="brake-status" role="status" aria-live="polite">Cargando frenos...</p>
       </section>
     </main>
 

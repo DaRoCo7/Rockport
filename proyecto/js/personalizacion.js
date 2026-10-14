@@ -13,6 +13,202 @@ const rimStatus = document.querySelector("#rim-status");
 const paintStatus = document.querySelector("#paint-status");
 const tireSelector = document.querySelector("#tire-selector");
 const tireStatus = document.querySelector("#tire-status");
+const caliperSelector = document.querySelector("#caliper-selector");
+const discSelector = document.querySelector("#disc-selector");
+const brakeStatus = document.querySelector("#brake-status");
+
+function createDiscShape(THREE, innerRadius, drilled, slotted) {
+  const shape = new THREE.Shape();
+  // Contorno exterior fino y hueco central, normalizados al radio del disco.
+  for (let i = 0; i <= 96; i++) {
+    const angle = i * Math.PI * 2 / 96;
+    if (i === 0) shape.moveTo(Math.cos(angle), Math.sin(angle));
+    else shape.lineTo(Math.cos(angle), Math.sin(angle));
+  }
+  const center = new THREE.Path();
+  center.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
+  shape.holes.push(center);
+  if (drilled) {
+    for (const radius of [0.62, 0.82]) {
+      for (let i = 0; i < 18; i++) {
+        const angle = i * Math.PI * 2 / 18;
+        const hole = new THREE.Path();
+        hole.absarc(Math.cos(angle) * radius, Math.sin(angle) * radius,
+          0.024, 0, Math.PI * 2, true);
+        shape.holes.push(hole);
+      }
+    }
+  }
+  if (slotted) {
+    for (let i = 0; i < 9; i++) {
+      // Las ranuras quedan entre filas de agujeros, sin cruzarlos.
+      const angle = i * Math.PI * 2 / 9 + Math.PI / 18;
+      const start = new THREE.Vector2(Math.cos(angle) * 0.54, Math.sin(angle) * 0.54);
+      const end = new THREE.Vector2(Math.cos(angle + 0.07) * 0.92, Math.sin(angle + 0.07) * 0.92);
+      const normal = new THREE.Vector2(-(end.y - start.y), end.x - start.x).normalize().multiplyScalar(0.012);
+      const slot = new THREE.Path();
+      slot.moveTo(start.x + normal.x, start.y + normal.y);
+      slot.lineTo(end.x + normal.x, end.y + normal.y);
+      slot.lineTo(end.x - normal.x, end.y - normal.y);
+      slot.lineTo(start.x - normal.x, start.y - normal.y);
+      slot.closePath();
+      shape.holes.push(slot);
+    }
+  }
+  return shape;
+}
+
+function createDiscAlternatives(THREE, discs, materials) {
+  const styles = new Map([["original", [...discs.keys()]]]);
+  const dimensions = [];
+  for (const original of discs.keys()) {
+    const positions = original.geometry.attributes.position;
+    if (!positions || positions.itemSize !== 3) return { styles, valid: false };
+    original.geometry.computeBoundingBox();
+    const bounds = original.geometry.boundingBox;
+    const center = bounds.getCenter(new THREE.Vector3());
+    let innerRadius = Infinity;
+    let radius = 0;
+    for (let i = 0; i < positions.count; i++) {
+      const radial = Math.hypot(positions.getY(i) - center.y, positions.getZ(i) - center.z);
+      innerRadius = Math.min(innerRadius, radial);
+      radius = Math.max(radius, radial);
+    }
+    const thickness = bounds.max.x - bounds.min.x;
+    // Solo sustituye los anillos comprobados; no presupone geometría de otro GLB.
+    if (![innerRadius, radius, thickness].every((value) => Number.isFinite(value) && value > 0) ||
+        Math.abs(innerRadius / radius - 0.46) > 0.02 || thickness / radius > 0.2) {
+      return { styles, valid: false };
+    }
+    dimensions.push({ original, center, radius, innerRadius, thickness });
+  }
+  const surface = new THREE.MeshStandardMaterial({ color: "#b9bec5", metalness: 0.65, roughness: 0.38 });
+  const recess = new THREE.MeshStandardMaterial({ color: "#656b73", metalness: 0.65, roughness: 0.48 });
+  materials.add(surface);
+  materials.add(recess);
+  const ratio = dimensions[0].innerRadius / dimensions[0].radius;
+  const extrude = (shape, depth, offset) => {
+    const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 8, steps: 1 });
+    geometry.translate(0, 0, offset);
+    // La extrusión Z se alinea con el eje X local de los BrakeDisc originales.
+    geometry.rotateY(Math.PI / 2);
+    return geometry;
+  };
+  for (const finish of ["drilled", "slotted", "drilled-slotted"]) {
+    const drilled = finish !== "slotted";
+    const slotted = finish !== "drilled";
+    const baseShape = createDiscShape(THREE, ratio, drilled, false);
+    // Núcleo con agujeros pasantes y dos caras recortadas: las ranuras tienen fondo.
+    const layers = slotted
+      ? [
+          { geometry: extrude(baseShape, 0.80, -0.40), material: recess },
+          { geometry: extrude(createDiscShape(THREE, ratio, drilled, true), 0.10, -0.50), material: surface },
+          { geometry: extrude(createDiscShape(THREE, ratio, drilled, true), 0.10, 0.40), material: surface }
+        ]
+      : [{ geometry: extrude(baseShape, 1, -0.50), material: surface }];
+    const replacements = [];
+    for (const { original, center, radius, thickness } of dimensions) {
+      const replacement = new THREE.Group();
+      replacement.name = `${original.name}_${finish}`;
+      replacement.position.copy(original.position);
+      replacement.quaternion.copy(original.quaternion);
+      replacement.scale.copy(original.scale);
+      const fitted = new THREE.Group();
+      fitted.position.copy(center);
+      fitted.scale.set(thickness, radius, radius);
+      replacement.add(fitted);
+      for (const { geometry, material } of layers) {
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = original.castShadow;
+        mesh.receiveShadow = original.receiveShadow;
+        fitted.add(mesh);
+      }
+      replacement.visible = false;
+      original.parent.add(replacement);
+      replacements.push(replacement);
+    }
+    // Cada capa comparte geometría y material entre las cuatro ruedas.
+    styles.set(finish, replacements);
+  }
+  return { styles, valid: true };
+}
+
+function activateDiscFinish(styles, id) {
+  if (!styles?.has(id)) return false;
+  // Oculta solo BrakeDisc: no deja el disco original tapando los agujeros.
+  for (const [finish, meshes] of styles) {
+    for (const mesh of meshes) mesh.visible = finish === id;
+  }
+  return true;
+}
+
+function prepareBrakeStyles(THREE, gltf) {
+  const nodes = [
+    [82, 76, "WheelFrontLBrakePad", 16], [87, 78, "WheelFrontRBrakePad", 16],
+    [92, 81, "WheelRearLBrakePad", 16], [97, 83, "WheelRearRBrakePad", 16],
+    [83, 77, "WheelFrontLBrakeDisc", 17], [88, 79, "WheelFrontRBrakeDisc", 17],
+    [91, 80, "WheelRearLBrakeDisc", 17], [96, 82, "WheelRearRBrakeDisc", 17]
+  ];
+  const json = gltf.parser.json;
+  if (json.materials[16]?.name !== "Brake" || json.materials[17]?.name !== "Disc" ||
+      !nodes.every(([node, mesh, name, material]) => json.nodes[node]?.name === name &&
+        json.nodes[node]?.mesh === mesh && json.meshes[mesh]?.primitives.length === 1 &&
+        json.meshes[mesh].primitives[0].material === material)) return null;
+  const expected = new Map(nodes.map(([, mesh, , material]) => [mesh, material]));
+  const targets = new Map();
+  gltf.scene.traverse((object) => {
+    if (!object.isMesh) return;
+    const association = gltf.parser.associations.get(object);
+    const material = expected.get(association?.meshes);
+    if (material !== undefined && association.primitives === 0 &&
+        object.material?.name === json.materials[material].name && object.material.color?.isColor) {
+      targets.set(association.meshes, object);
+    }
+  });
+  if (targets.size !== 8) return null;
+  const calipers = new Map([76, 78, 81, 83].map((mesh) => {
+    const object = targets.get(mesh);
+    return [object, object.material];
+  }));
+  const discs = new Map([77, 79, 80, 82].map((mesh) => {
+    const object = targets.get(mesh);
+    return [object, object.material];
+  }));
+  const materials = new Set([...calipers.values(), ...discs.values()]);
+  const caliperStyles = new Map([["original", calipers]]);
+  const colors = { red: "#d92b30", yellow: "#f2cb24", blue: "#246bdb", black: "#17191c", gold: "#c4a45a" };
+  for (const [id, color] of Object.entries(colors)) {
+    const clones = new Map();
+    const assignments = new Map();
+    for (const [object, source] of calipers) {
+      // Clona incluso si otra pieza comparte material; Original queda intacto.
+      if (!clones.has(source)) {
+        const material = source.clone();
+        material.color.set(color);
+        // La emisión del atlas no se tiñe con color: retírala de las variantes.
+        material.emissiveMap = null;
+        material.emissive.set(0x000000);
+        material.map = null;
+        // Acabado pintado para distinguir los colores bajo las luces existentes.
+        material.metalness = id === "gold" ? 0.55 : 0.15;
+        material.roughness = 0.32;
+        clones.set(source, material);
+        materials.add(material);
+      }
+      assignments.set(object, clones.get(source));
+    }
+    caliperStyles.set(id, assignments);
+  }
+  const alternatives = createDiscAlternatives(THREE, discs, materials);
+  return { caliperStyles, discStyles: alternatives.styles, materials, discGeometryValid: alternatives.valid };
+}
+
+function applyBrakeStyle(styles, id) {
+  const assignments = styles?.get(id);
+  if (!assignments) return;
+  // Recursos preparados una vez; Original restaura el material exacto del GLB.
+  for (const [object, material] of assignments) object.material = material;
+}
 
 function createTreadTextures(THREE, style) {
   const size = 256;
@@ -417,6 +613,19 @@ function createGLBRimLoader(THREE, loader, targets, colors) {
 async function initializeViewer() {
   let renderer, controls, model, observer, textureLoader, floor, keyLight;
   let tireStyles;
+  let brakeStyles;
+  const changeCaliperColor = (event) => {
+    if (event.target.matches('input[name="caliper"]')) {
+      applyBrakeStyle(brakeStyles?.caliperStyles, event.target.value);
+    }
+  };
+  const changeDiscFinish = (event) => {
+    if (event.target.matches('input[name="disc"]')) {
+      if (activateDiscFinish(brakeStyles?.discStyles, event.target.value)) {
+        renderer.shadowMap.needsUpdate = true;
+      }
+    }
+  };
   const changeTireStyle = (event) => {
     if (!event.target.matches('input[name="tire"]')) return;
     const assignments = tireStyles?.styles.get(event.target.value);
@@ -490,6 +699,10 @@ async function initializeViewer() {
       materials.add(material);
       for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
     }
+    for (const material of brakeStyles?.materials ?? []) {
+      materials.add(material);
+      for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
+    }
     for (const geometry of geometries) geometry.dispose();
     for (const texture of textures) texture.dispose();
     for (const material of materials) material.dispose();
@@ -504,11 +717,15 @@ async function initializeViewer() {
     rimSelector.removeEventListener("change", changeRimColor);
     rimDesignSelector.removeEventListener("change", changeRimDesign);
     tireSelector.removeEventListener("change", changeTireStyle);
+    caliperSelector.removeEventListener("change", changeCaliperColor);
+    discSelector.removeEventListener("change", changeDiscFinish);
     paintSelector.disabled = true;
     finishSelector.disabled = true;
     rimSelector.disabled = true;
     rimDesignSelector.disabled = true;
     tireSelector.disabled = true;
+    caliperSelector.disabled = true;
+    discSelector.disabled = true;
   }
   try {
     // El import map fija una misma versión para los módulos.
@@ -591,6 +808,22 @@ async function initializeViewer() {
       if (event.total) paintStatus.textContent = `Cargando CarConcept: ${Math.round(event.loaded / event.total * 100)} %`;
     });
     model = gltf.scene;
+    brakeStyles = prepareBrakeStyles(THREE, gltf);
+    if (brakeStyles) {
+      caliperSelector.disabled = false;
+      caliperSelector.addEventListener("change", changeCaliperColor);
+      changeCaliperColor({ target: caliperSelector.querySelector("input:checked") });
+      discSelector.disabled = !brakeStyles.discGeometryValid;
+      if (brakeStyles.discGeometryValid) {
+        discSelector.addEventListener("change", changeDiscFinish);
+        changeDiscFinish({ target: discSelector.querySelector("input:checked") });
+      }
+      brakeStatus.textContent = brakeStyles.discGeometryValid
+        ? "Pinzas y discos independientes. Perforado: agujeros pasantes; Ranurado: canales con fondo; combinado: ambos. Los detalles pueden quedar ocultos por la llanta según el ángulo."
+        : "Colores de pinzas disponibles. La geometría de los discos no permite alternativas seguras; se conserva Original.";
+    } else {
+      brakeStatus.textContent = "No se pudieron identificar los frenos con seguridad. Controles desactivados.";
+    }
     tireStyles = prepareTireStyles(THREE, gltf);
     if (tireStyles) {
       tireSelector.disabled = false;
