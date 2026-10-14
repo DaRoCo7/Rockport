@@ -63,13 +63,51 @@ function prepareRimMaterials(gltf) {
   return { originals, targets };
 }
 
-function createCustomRims(THREE, targets, colors) {
-  const parts = [...targets.values()];
+// Definiciones independientes de la selección y de la construcción de mallas.
+const rimDesignDefinitions = [
+  { id: "original" },
+  { id: "five-spoke", prefix: "FiveSpokeRim", count: 5, width: 0.10 },
+  { id: "multi-spoke", prefix: "MultiSpokeRim", count: 12, width: 0.035 }
+];
+const rimMeshIndices = [90, 92, 94, 96];
+
+function getRimBounds(THREE, targets, meshIndex = 90) {
   const bounds = new THREE.Box3();
-  for (const part of [targets.get("90:0"), targets.get("90:1")]) {
+  for (const part of [targets.get(`${meshIndex}:0`), targets.get(`${meshIndex}:1`)]) {
     part.geometry.computeBoundingBox();
     bounds.union(part.geometry.boundingBox);
   }
+  return bounds;
+}
+
+function createRimPlacement(THREE, targets, meshIndex, name) {
+  const original = targets.get(`${meshIndex}:0`);
+  const replacement = new THREE.Group();
+  replacement.name = `${name}${meshIndex}`;
+  // Mismo padre y transformación local: conserva giro, escala y centrado.
+  replacement.position.copy(original.parent.position);
+  replacement.quaternion.copy(original.parent.quaternion);
+  replacement.scale.copy(original.parent.scale);
+  const design = new THREE.Group();
+  // La cara exterior de las ruedas derechas mira hacia -X local.
+  if (meshIndex === 92 || meshIndex === 96) design.rotation.y = Math.PI;
+  replacement.add(design);
+  replacement.visible = false;
+  return { replacement, design, parent: original.parent.parent };
+}
+
+function activateRimDesign(selected, designs) {
+  if (!designs.has(selected)) return false;
+  // Solo alterna llantas ya creadas; no toca neumáticos, discos ni frenos.
+  for (const [id, rims] of designs) {
+    for (const rim of rims) rim.visible = id === selected;
+  }
+  return true;
+}
+
+function createCustomRims(THREE, targets, colors) {
+  const parts = [...targets.values()];
+  const bounds = getRimBounds(THREE, targets);
   const radius = Math.max(Math.abs(bounds.min.y), Math.abs(bounds.max.y),
     Math.abs(bounds.min.z), Math.abs(bounds.max.z));
   const innerRadius = radius * 0.94;
@@ -86,33 +124,20 @@ function createCustomRims(THREE, targets, colors) {
   hubGeometry.rotateZ(-Math.PI / 2);
   const spokeLength = innerRadius - hubRadius + radius * 0.04;
   // Ambos diseños comparten aro, centro y material; solo varían los radios.
-  const designs = [
-    { name: "five-spoke", prefix: "FiveSpokeRim", count: 5, width: 0.10 },
-    { name: "multi-spoke", prefix: "MultiSpokeRim", count: 12, width: 0.035 }
-  ];
   const source = parts.find((part) => part.material.name === "Rim1").material;
   const material = new THREE.MeshStandardMaterial({
     color: colors.get(source), metalness: 0.85, roughness: 0.3
   });
   colors.set(material, material.color.clone());
-  const replacements = new Map();
-  for (const { name, prefix, count, width } of designs) {
+  const replacements = new Map([["original", parts]]);
+  for (const { id, prefix, count, width } of rimDesignDefinitions) {
+    if (id === "original") continue;
     // Una geometría de radio por diseño, reutilizada en las cuatro ruedas.
     const spokeGeometry = new THREE.BoxGeometry(depth, spokeLength, radius * width);
     const rims = [];
-    replacements.set(name, rims);
-    for (const meshIndex of [90, 92, 94, 96]) {
-      const original = targets.get(`${meshIndex}:0`);
-      const replacement = new THREE.Group();
-      replacement.name = `${prefix}${meshIndex}`;
-      // Mismo padre y transformación local: conserva giro, escala y centrado.
-      replacement.position.copy(original.parent.position);
-      replacement.quaternion.copy(original.parent.quaternion);
-      replacement.scale.copy(original.parent.scale);
-      const design = new THREE.Group();
-      // La cara exterior de las ruedas derechas mira hacia -X local.
-      if (meshIndex === 92 || meshIndex === 96) design.rotation.y = Math.PI;
-      replacement.add(design);
+    replacements.set(id, rims);
+    for (const meshIndex of rimMeshIndices) {
+      const { replacement, design, parent } = createRimPlacement(THREE, targets, meshIndex, prefix);
       const barrel = new THREE.Mesh(barrelGeometry, material);
       const hub = new THREE.Mesh(hubGeometry, material);
       hub.position.x = face;
@@ -128,30 +153,100 @@ function createCustomRims(THREE, targets, colors) {
       replacement.traverse((object) => {
         if (object.isMesh) object.castShadow = true;
       });
-      replacement.visible = false;
-      original.parent.parent.add(replacement);
+      parent.add(replacement);
       rims.push(replacement);
     }
   }
   return replacements;
 }
 
+function createGLBRimLoader(THREE, loader, targets, colors) {
+  const loads = new Map();
+  // Un GLB debe contener solo una llanta estática; rotation alinea su eje con X.
+  return function loadGLBRimDesign({ id, url, rotation = [0, 0, 0] }) {
+    if (loads.has(id)) return loads.get(id);
+    const pending = (async () => {
+      try {
+        if (!id || !url || rimDesignDefinitions.some((design) => design.id === id) ||
+            !Array.isArray(rotation) || rotation.length !== 3 || !rotation.every(Number.isFinite)) {
+          throw new Error("Definición de llanta externa no válida");
+        }
+        // Usa el mismo GLTFLoader, incluida su configuración KTX2.
+        const gltf = await loader.loadAsync(url);
+        const template = new THREE.Group();
+        const oriented = new THREE.Group();
+        oriented.rotation.set(...rotation);
+        oriented.add(gltf.scene);
+        template.add(oriented);
+        let meshCount = 0;
+        gltf.scene.traverse((object) => {
+          if (!object.isMesh) return;
+          if (object.isSkinnedMesh || object.isInstancedMesh) {
+            throw new Error("La llanta externa debe usar mallas estáticas");
+          }
+          meshCount++;
+        });
+        const bounds = new THREE.Box3().setFromObject(template, true);
+        const size = bounds.getSize(new THREE.Vector3());
+        if (!meshCount || ![size.x, size.y, size.z].every((value) => Number.isFinite(value) && value > 0)) {
+          throw new Error("El GLB no contiene una llanta con dimensiones válidas");
+        }
+        // Centra después de orientar; mantiene proporciones en el plano de radios.
+        oriented.position.sub(bounds.getCenter(new THREE.Vector3()));
+        const materials = new Map();
+        gltf.scene.traverse((object) => {
+          if (!object.isMesh) return;
+          const isolate = (source) => {
+            if (!materials.has(source)) materials.set(source, source.clone());
+            return materials.get(source);
+          };
+          object.material = Array.isArray(object.material)
+            ? object.material.map(isolate) : isolate(object.material);
+          object.castShadow = true;
+        });
+        const placements = rimMeshIndices.map((meshIndex) => {
+          const placement = createRimPlacement(THREE, targets, meshIndex, id);
+          const targetBounds = getRimBounds(THREE, targets, meshIndex);
+          const targetSize = targetBounds.getSize(new THREE.Vector3());
+          if (![targetSize.x, targetSize.y, targetSize.z].every((value) => Number.isFinite(value) && value > 0)) {
+            throw new Error("Dimensiones de llanta original no válidas");
+          }
+          const radialScale = Math.min(targetSize.y / size.y, targetSize.z / size.z);
+          // Las cuatro copias comparten geometrías y materiales aislados del GLB.
+          const copy = template.clone(true);
+          copy.scale.set(targetSize.x / size.x, radialScale, radialScale);
+          copy.position.copy(targetBounds.getCenter(new THREE.Vector3()));
+          // Compensa el giro derecho para conservar el centro local original.
+          copy.position.applyQuaternion(placement.design.quaternion.clone().invert());
+          placement.design.add(copy);
+          return placement;
+        });
+        // Registra materiales y mallas solo cuando todo el diseño está listo.
+        for (const material of materials.values()) {
+          if (material.color?.isColor) colors.set(material, material.color.clone());
+        }
+        for (const { parent, replacement } of placements) parent.add(replacement);
+        return placements.map(({ replacement }) => replacement);
+      } catch (error) {
+        console.warn(`No se pudo cargar el diseño de llanta ${id}:`, error);
+        return null;
+      }
+    })();
+    // También comparte la promesa entre solicitudes simultáneas del mismo diseño.
+    loads.set(id, pending);
+    return pending;
+  };
+}
+
 async function initializeViewer() {
   let renderer, controls, model, observer, textureLoader, floor, keyLight;
   const paintMaterials = new Set();
   let originalRimColors = new Map();
-  let originalRimParts = [];
   let replacementRims = new Map();
   const changeRimDesign = (event) => {
     if (!event.target.matches('input[name="rim-design"]')) return;
     const selected = event.target.value;
-    if (selected !== "original" && !replacementRims.has(selected)) return;
-    // Oculta solo las ocho primitivas; conserva neumáticos, discos y frenos.
-    for (const part of originalRimParts) part.visible = selected === "original";
-    // Cambia visibilidad sin crear objetos ni afectar otras piezas.
-    for (const [name, rims] of replacementRims) {
-      for (const rim of rims) rim.visible = name === selected;
-    }
+    if (!activateRimDesign(selected, replacementRims)) return;
     renderer.shadowMap.needsUpdate = true;
   };
   const rimColors = { black: "#17191c", silver: "#b8bec5", bronze: "#96704a", gold: "#c4a45a" };
@@ -309,8 +404,9 @@ async function initializeViewer() {
     const rimMaterials = prepareRimMaterials(gltf);
     if (rimMaterials) {
       originalRimColors = rimMaterials.originals;
-      originalRimParts = [...rimMaterials.targets.values()];
       replacementRims = createCustomRims(THREE, rimMaterials.targets, originalRimColors);
+      // Futuro GLB: crear createGLBRimLoader con loader, targets y originalRimColors;
+      // registrar su resultado en replacementRims y reaplicar changeRimColor.
       rimDesignSelector.disabled = false;
       rimDesignSelector.addEventListener("change", changeRimDesign);
       changeRimDesign({ target: rimDesignSelector.querySelector("input:checked") });
