@@ -5,9 +5,12 @@ const app = express();
 const port = process.env.PORT || 3000;
 const wikiApi = "https://nfs.fandom.com/api.php";
 // Registro por juego y pageid: cada entrada tendrá { url: URL local del GLB, profile: identificador }.
-// Sin asociaciones hasta disponer de modelos fieles; CarConcept es solo demostración.
+// Solo modelos del vehículo exacto; CarConcept permanece fuera del catálogo.
 const model3dRegistry = new Map([
-  ["most-wanted-2005", new Map()],
+  ["most-wanted-2005", new Map([
+    // pageid confirmado en /api/cars: BMW M3 GTR (E46), no Strassenversion.
+    ["9373", { url: "/assets/modelos/BMW_M3_GTR.glb", profile: "bmw-m3-gtr" }]
+  ])],
   ["carbon", new Map()],
   ["underground-2", new Map()]
 ]);

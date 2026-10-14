@@ -610,6 +610,22 @@ function createGLBRimLoader(THREE, loader, targets, colors) {
   };
 }
 
+function prepareBMWModel(THREE, scene) {
+  const model = new THREE.Group();
+  model.name = "BMW_M3_GTR_Viewer";
+  // GLB inspeccionado: Y vertical, frontal +Z; conserva sus giros de importación.
+  model.add(scene);
+  const bounds = new THREE.Box3().setFromObject(model, true);
+  const size = bounds.getSize(new THREE.Vector3());
+  const length = size.z;
+  if (bounds.isEmpty() || ![size.x, size.y, length].every((value) => Number.isFinite(value) && value > 0)) {
+    throw new Error("El BMW no contiene dimensiones válidas para el visor");
+  }
+  // Compensa la escala 0,01 de importación manteniendo todas las proporciones.
+  model.scale.setScalar(4.6 / length);
+  return model;
+}
+
 // Las referencias de CarConcept solo se usan cuando se solicita su perfil explícito.
 const customizationProfiles = new Map([
   ["carconcept-demo", {
@@ -620,6 +636,12 @@ const customizationProfiles = new Map([
     acceptsPaint: (object, material) => object.name.startsWith("Body") &&
       ["Paint 1 Carmine", "Paint 2 Carmine"].includes(material.name),
     finishes: true
+  }],
+  // Perfil inicial de visualización: sin adaptadores de personalización todavía.
+  ["bmw-m3-gtr", {
+    prepareModel: prepareBMWModel,
+    // Tres cuartos delantero más bajo: evita alejar el coche para encajar su altura.
+    framing: { position: [6, 1, 5], widthOccupancy: 0.72, minZoom: 0.45, maxZoom: 3 }
   }]
 ]);
 
@@ -760,7 +782,7 @@ async function initializeViewer(car) {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#111318");
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(4, 2.4, 5);
+    camera.position.set(...(profile.framing?.position ?? [4, 2.4, 5]));
     // Luz suave y acentos cálidos/fríos para destacar la carrocería.
     // Relleno suave para conservar detalle en las zonas oscuras.
     scene.add(new THREE.HemisphereLight(0xe6edff, 0x343238, 0.85));
@@ -788,19 +810,46 @@ async function initializeViewer(car) {
       const direction = camera.position.clone().sub(controls.target).normalize();
       const right = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
       const up = new THREE.Vector3().crossVectors(direction, right).normalize();
-      // Proyecta la caja: respeta ambos ejes y deja un 8 % de margen.
-      let distance = radius * 1.2;
+      // Proyecta la caja; el perfil BMW ajusta después su ocupación real del ancho.
+      const horizontalMargin = profile.framing ? 1 / profile.framing.widthOccupancy : 1.08;
+      const verticalMargin = profile.framing ? 1.10 : 1.08;
+      const minZoom = profile.framing?.minZoom ?? 1.2;
+      let distance = radius * minZoom;
       for (const corner of framingCorners) {
         const offset = corner.clone().sub(controls.target);
         const depth = offset.dot(direction);
         distance = Math.max(distance,
-          depth + Math.abs(offset.dot(right)) * 1.08 / Math.tan(horizontal),
-          depth + Math.abs(offset.dot(up)) * 1.08 / Math.tan(halfFov));
+          depth + Math.abs(offset.dot(right)) * horizontalMargin / Math.tan(horizontal),
+          depth + Math.abs(offset.dot(up)) * verticalMargin / Math.tan(halfFov));
+      }
+      if (profile.framing) {
+        // La perspectiva es asimétrica: busca el 72 % real sin recortar en móvil.
+        const projections = framingCorners.map((corner) => {
+          const offset = corner.clone().sub(controls.target);
+          return { x: offset.dot(right), y: offset.dot(up), depth: offset.dot(direction) };
+        });
+        let near = Math.max(radius * minZoom, ...projections.map((point) => point.depth + radius / 100));
+        let far = distance * 2;
+        for (let i = 0; i < 32; i++) {
+          const candidate = (near + far) / 2;
+          let left = Infinity, rightEdge = -Infinity, height = 0;
+          for (const point of projections) {
+            const depth = candidate - point.depth;
+            const x = point.x / depth / Math.tan(horizontal);
+            left = Math.min(left, x);
+            rightEdge = Math.max(rightEdge, x);
+            height = Math.max(height, Math.abs(point.y / depth / Math.tan(halfFov)));
+          }
+          if ((rightEdge - left) / 2 <= profile.framing.widthOccupancy &&
+              Math.max(Math.abs(left), Math.abs(rightEdge)) <= 0.95 && height <= 1 / verticalMargin) far = candidate;
+          else near = candidate;
+        }
+        distance = far;
       }
       camera.position.copy(controls.target).addScaledVector(direction, distance);
-      controls.minDistance = radius * 1.2;
+      controls.minDistance = radius * minZoom;
       // Conserva el alcance de zoom anterior, basado en la esfera envolvente.
-      controls.maxDistance = radius / Math.sin(Math.min(halfFov, horizontal)) * 1.08 * 4;
+      controls.maxDistance = radius / Math.sin(Math.min(halfFov, horizontal)) * 1.08 * (profile.framing?.maxZoom ?? 4);
       camera.near = radius / 100;
       camera.far = controls.maxDistance * 2.5 + radius;
       camera.updateProjectionMatrix();
@@ -831,6 +880,7 @@ async function initializeViewer(car) {
       if (event.total) paintStatus.textContent = `Cargando modelo 3D: ${Math.round(event.loaded / event.total * 100)} %`;
     });
     model = gltf.scene;
+    if (profile.prepareModel) model = profile.prepareModel(THREE, model);
     brakeStyles = profile.prepareBrakes?.(THREE, gltf);
     if (brakeStyles) {
       caliperSelector.disabled = false;
