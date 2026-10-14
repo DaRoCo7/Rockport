@@ -39,10 +39,9 @@
           <img id="vehicle-image" class="vehicle-image" alt="" hidden>
           <p id="vehicle-image-status" hidden>Imagen no disponible.</p>
         </div>
-        <!-- Modelo independiente del vehículo seleccionado en la API. -->
-        <p>CarConcept es un modelo 3D de demostración y no representa necesariamente el vehículo seleccionado.</p>
-        <div id="car-viewer" class="car-viewer"></div>
-        <p id="paint-status" role="status" aria-live="polite">Cargando CarConcept...</p>
+        <!-- El visor solo carga el GLB asociado al vehículo seleccionado. -->
+        <div id="car-viewer" class="car-viewer" hidden></div>
+        <p id="paint-status" role="status" aria-live="polite">Comprobando disponibilidad del modelo 3D...</p>
         <fieldset id="paint-selector" disabled aria-describedby="paint-status">
           <legend>PINTURA</legend>
           <label><input type="radio" name="paint" value="#f2cb24" checked> Amarillo</label>

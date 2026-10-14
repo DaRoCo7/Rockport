@@ -4,6 +4,18 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 const wikiApi = "https://nfs.fandom.com/api.php";
+// Registro por juego y pageid: cada entrada tendrá { url: URL local del GLB, profile: identificador }.
+// Sin asociaciones hasta disponer de modelos fieles; CarConcept es solo demostración.
+const model3dRegistry = new Map([
+  ["most-wanted-2005", new Map()],
+  ["carbon", new Map()],
+  ["underground-2", new Map()]
+]);
+
+function getModel3d(gameId, id) {
+  return model3dRegistry.get(gameId)?.get(String(id)) ?? null;
+}
+
 const games = {
   "most-wanted-2005": {
     label: "Most Wanted (2005)",
@@ -95,7 +107,9 @@ app.get("/api/cars", async (req, res) => {
       });
     }
 
-    return res.json(pages.map((page) => ({ ...page, gameId, gameLabel: game.label })));
+    return res.json(pages.map((page) => ({
+      ...page, gameId, gameLabel: game.label, model3d: getModel3d(gameId, page.id)
+    })));
   } catch (error) {
     console.error(`Could not load the NFS Wiki catalog for ${gameId}:`, error);
     return res.status(502).json({

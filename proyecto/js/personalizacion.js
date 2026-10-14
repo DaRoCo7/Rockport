@@ -610,7 +610,30 @@ function createGLBRimLoader(THREE, loader, targets, colors) {
   };
 }
 
-async function initializeViewer() {
+// Las referencias de CarConcept solo se usan cuando se solicita su perfil explícito.
+const customizationProfiles = new Map([
+  ["carconcept-demo", {
+    prepareBrakes: prepareBrakeStyles,
+    prepareTires: prepareTireStyles,
+    prepareRims: prepareRimMaterials,
+    createRims: createCustomRims,
+    acceptsPaint: (object, material) => object.name.startsWith("Body") &&
+      ["Paint 1 Carmine", "Paint 2 Carmine"].includes(material.name),
+    finishes: true
+  }]
+]);
+
+function disableCustomization(message) {
+  for (const selector of [paintSelector, finishSelector, rimSelector, rimDesignSelector,
+    tireSelector, caliperSelector, discSelector]) selector.disabled = true;
+  for (const status of [rimStatus, tireStatus, brakeStatus]) status.textContent = message;
+}
+
+async function initializeViewer(car) {
+  const { model3d } = car;
+  // Perfil desconocido: permite visualizar, sin aplicar referencias de otro modelo.
+  const profile = customizationProfiles.get(model3d.profile) ?? {};
+  viewer.hidden = false;
   let renderer, controls, model, observer, textureLoader, floor, keyLight;
   let tireStyles;
   let brakeStyles;
@@ -751,7 +774,7 @@ async function initializeViewer() {
     // Solo la luz principal genera sombras suaves de coste moderado.
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.domElement.setAttribute("aria-label", "CarConcept, coche 3D de demostración: arrastra para rotar y usa la rueda para acercar");
+    renderer.domElement.setAttribute("aria-label", `${car.title}, modelo 3D: arrastra para rotar y usa la rueda para acercar`);
     viewer.append(renderer.domElement);
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -797,18 +820,18 @@ async function initializeViewer() {
       }
     });
     observer.observe(viewer);
-    // CarConcept contiene texturas KTX2 incrustadas: requiere Basis Universal.
+    // Conserva soporte KTX2 para los modelos que incluyan estas texturas.
     textureLoader = new KTX2Loader()
       .setTranscoderPath("https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/basis/")
       .detectSupport(renderer);
     const loader = new GLTFLoader().setKTX2Loader(textureLoader);
-    paintStatus.textContent = "Cargando CarConcept...";
+    paintStatus.textContent = `Cargando modelo 3D de ${car.title}...`;
     viewer.setAttribute("aria-busy", "true");
-    const gltf = await loader.loadAsync("/assets/modelos/CarConcept.glb", (event) => {
-      if (event.total) paintStatus.textContent = `Cargando CarConcept: ${Math.round(event.loaded / event.total * 100)} %`;
+    const gltf = await loader.loadAsync(model3d.url, (event) => {
+      if (event.total) paintStatus.textContent = `Cargando modelo 3D: ${Math.round(event.loaded / event.total * 100)} %`;
     });
     model = gltf.scene;
-    brakeStyles = prepareBrakeStyles(THREE, gltf);
+    brakeStyles = profile.prepareBrakes?.(THREE, gltf);
     if (brakeStyles) {
       caliperSelector.disabled = false;
       caliperSelector.addEventListener("change", changeCaliperColor);
@@ -822,32 +845,42 @@ async function initializeViewer() {
         ? "Pinzas y discos independientes. Perforado: agujeros pasantes; Ranurado: canales con fondo; combinado: ambos. Los detalles pueden quedar ocultos por la llanta según el ángulo."
         : "Colores de pinzas disponibles. La geometría de los discos no permite alternativas seguras; se conserva Original.";
     } else {
-      brakeStatus.textContent = "No se pudieron identificar los frenos con seguridad. Controles desactivados.";
+      brakeStatus.textContent = profile.prepareBrakes
+        ? "No se pudieron identificar los frenos con seguridad. Controles desactivados."
+        : "Este perfil no admite personalización de frenos.";
     }
-    tireStyles = prepareTireStyles(THREE, gltf);
+    tireStyles = profile.prepareTires?.(THREE, gltf);
     if (tireStyles) {
       tireSelector.disabled = false;
       tireSelector.addEventListener("change", changeTireStyle);
       changeTireStyle({ target: tireSelector.querySelector("input:checked") });
       tireStatus.textContent = "Deportivo: chevrones y flanco discreto; Semislick: surcos reducidos y letras blancas; Slick: banda lisa, letras y franja amarilla. Relieve simulado por textura, sin cambiar la geometría.";
     } else {
-      tireStatus.textContent = "No se pudieron identificar los flancos y la rodadura con seguridad. Controles desactivados.";
+      tireStatus.textContent = profile.prepareTires
+        ? "No se pudieron identificar los flancos y la rodadura con seguridad. Controles desactivados."
+        : "Este perfil no admite personalización de neumáticos.";
     }
-    const rimMaterials = prepareRimMaterials(gltf);
+    const rimMaterials = profile.prepareRims?.(gltf);
     if (rimMaterials) {
       originalRimColors = rimMaterials.originals;
-      replacementRims = createCustomRims(THREE, rimMaterials.targets, originalRimColors);
+      replacementRims = profile.createRims
+        ? profile.createRims(THREE, rimMaterials.targets, originalRimColors)
+        : new Map([["original", [...rimMaterials.targets.values()]]]);
       // Futuro GLB: crear createGLBRimLoader con loader, targets y originalRimColors;
       // registrar su resultado en replacementRims y reaplicar changeRimColor.
-      rimDesignSelector.disabled = false;
-      rimDesignSelector.addEventListener("change", changeRimDesign);
-      changeRimDesign({ target: rimDesignSelector.querySelector("input:checked") });
+      rimDesignSelector.disabled = !profile.createRims;
+      if (profile.createRims) {
+        rimDesignSelector.addEventListener("change", changeRimDesign);
+        changeRimDesign({ target: rimDesignSelector.querySelector("input:checked") });
+      }
       rimSelector.disabled = false;
       rimSelector.addEventListener("change", changeRimColor);
       changeRimColor({ target: rimSelector.querySelector("input:checked") });
       rimStatus.textContent = "Elige diseño y color de llantas; el color Original restaura el acabado de cada diseño.";
     } else {
-      rimStatus.textContent = "No se pudieron identificar las llantas con seguridad. Controles desactivados.";
+      rimStatus.textContent = profile.prepareRims
+        ? "No se pudieron identificar las llantas con seguridad. Controles desactivados."
+        : "Este perfil no admite personalización de llantas.";
       const candidates = [];
       model.traverse((object) => {
         if (!object.isMesh) return;
@@ -856,14 +889,12 @@ async function initializeViewer() {
       });
       console.warn("Revisar mallas y materiales para identificar las llantas:", candidates);
     }
-    // Lista explícita verificada en el GLB, sin seleccionar interiores por color.
-    const paintNames = new Set(["Paint 1 Carmine", "Paint 2 Carmine"]);
+    // Cada perfil identifica su pintura; no aplica nombres de CarConcept por defecto.
     model.traverse((object) => {
       if (!object.isMesh) return;
       object.castShadow = true;
-      if (!object.name.startsWith("Body")) return;
       for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-        if (!paintNames.has(material.name) || paintMaterials.has(material)) continue;
+        if (!profile.acceptsPaint?.(object, material) || paintMaterials.has(material)) continue;
         paintMaterials.add(material);
         // Guarda solo propiedades numéricas compatibles antes de personalizar.
         originalFinishes.set(material, Object.freeze(Object.fromEntries(
@@ -921,16 +952,18 @@ async function initializeViewer() {
     fitCamera();
     fittedAspect = camera.aspect;
     viewer.setAttribute("aria-busy", "false");
-    paintSelector.addEventListener("change", changeColor);
-    finishSelector.addEventListener("change", changeFinish);
     paintSelector.disabled = paintMaterials.size === 0;
-    finishSelector.disabled = paintMaterials.size === 0;
+    finishSelector.disabled = paintMaterials.size === 0 || !profile.finishes;
     if (paintMaterials.size) {
+      paintSelector.addEventListener("change", changeColor);
       changeColor({ target: paintSelector.querySelector("input:checked") });
-      changeFinish({ target: finishSelector.querySelector("input:checked") });
-      paintStatus.textContent = "CarConcept cargado. Combina color y acabado exterior, arrastra para rotar y usa la rueda o un gesto de pinza para hacer zoom.";
+      if (profile.finishes) {
+        finishSelector.addEventListener("change", changeFinish);
+        changeFinish({ target: finishSelector.querySelector("input:checked") });
+      }
+      paintStatus.textContent = `Modelo 3D de ${car.title} cargado. Usa las opciones disponibles, arrastra para rotar y usa la rueda o un gesto de pinza para hacer zoom.`;
     } else {
-      paintStatus.textContent = "Modelo cargado, pero no se encontraron materiales de pintura compatibles.";
+      paintStatus.textContent = `Modelo 3D de ${car.title} cargado. Este perfil no ofrece pintura compatible; arrastra para rotar y usa la rueda para hacer zoom.`;
     }
     // Un único bucle de renderizado y actualización de controles.
     renderer.setAnimationLoop(() => {
@@ -942,15 +975,18 @@ async function initializeViewer() {
     });
   } catch (error) {
     dispose();
+    viewer.hidden = true;
     viewer.setAttribute("aria-busy", "false");
-    paintStatus.textContent = "No se pudo cargar CarConcept. Comprueba /assets/modelos/CarConcept.glb, la conexión al CDN y la compatibilidad con WebGL.";
+    disableCustomization("Personalización desactivada: no se pudo cargar el modelo 3D.");
+    paintStatus.textContent = `No se pudo cargar el modelo 3D de ${car.title}. Comprueba el archivo GLB, la conexión y la compatibilidad con WebGL.`;
     console.error("Error del visor 3D:", error);
   }
 }
 
-initializeViewer();
-
 async function loadSelectedCar() {
+  disableCustomization("Esperando un modelo 3D compatible.");
+  viewer.hidden = true;
+  paintStatus.textContent = "Esperando la selección de vehículo.";
   const parameters = new URLSearchParams(window.location.search);
   const id = parameters.get("id");
   const game = parameters.get("game");
@@ -982,7 +1018,7 @@ async function loadSelectedCar() {
     document.querySelector("#panel-title").textContent = car.title;
     document.querySelector("#vehicle-game").textContent = `NEED FOR SPEED: ${car.gameLabel}`;
     vehicle.hidden = false;
-    vehicleStatus.textContent = "Vehículo seleccionado. La personalización estará disponible próximamente.";
+    vehicleStatus.textContent = "Vehículo seleccionado.";
 
     if (car.image) {
       vehicleImage.addEventListener("error", () => {
@@ -995,6 +1031,21 @@ async function loadSelectedCar() {
     } else {
       imageStatus.hidden = false;
     }
+
+    if (car.model3d == null) {
+      paintStatus.textContent = "Modelo 3D no disponible";
+      disableCustomization("Modelo 3D no disponible");
+      return;
+    }
+    // Solo URLs locales del registro, nunca un GLB deducido del título o un sustituto.
+    const model = car.model3d;
+    if (typeof model.url !== "string" || !model.url.startsWith("/assets/modelos/") ||
+        model.url.includes("..") || !model.url.endsWith(".glb") || typeof model.profile !== "string") {
+      paintStatus.textContent = "La asociación del modelo 3D no es válida. No se ha cargado ningún modelo.";
+      disableCustomization("Asociación de modelo 3D no válida.");
+      return;
+    }
+    await initializeViewer(car);
 
   } catch {
     vehicleStatus.textContent = "No se pudo cargar el vehículo desde la API. Vuelve al catálogo e inténtalo de nuevo.";
