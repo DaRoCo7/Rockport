@@ -7,11 +7,76 @@ const imageStatus = document.querySelector("#vehicle-image-status");
 const viewer = document.querySelector("#car-viewer");
 const paintSelector = document.querySelector("#paint-selector");
 const finishSelector = document.querySelector("#finish-selector");
+const rimSelector = document.querySelector("#rim-selector");
+const rimStatus = document.querySelector("#rim-status");
 const paintStatus = document.querySelector("#paint-status");
+
+function prepareRimMaterials(gltf) {
+  // Índices y nombres comprobados en CarConcept.glb, sin coincidencias parciales.
+  const rimNodes = [[81, 90, "WheelFrontLRim"], [86, 92, "WheelFrontRRim"],
+    [93, 94, "WheelRearLRim"], [98, 96, "WheelRearRRim"]];
+  const json = gltf.parser.json;
+  const valid = rimNodes.every(([node, mesh, name]) =>
+    json.nodes[node]?.name === name && json.nodes[node]?.mesh === mesh &&
+    json.meshes[mesh]?.primitives.length === 2 &&
+    json.meshes[mesh].primitives.every((primitive, index) => primitive.material === 20 + index)
+  ) && json.materials[20]?.name === "Rim2" && json.materials[21]?.name === "Rim1";
+  if (!valid) return null;
+  const meshIndices = new Set(rimNodes.map(([, mesh]) => mesh));
+  const targets = new Map();
+  let compatible = true;
+  gltf.scene.traverse((object) => {
+    if (!object.isMesh) return;
+    const association = gltf.parser.associations.get(object);
+    if (!meshIndices.has(association?.meshes)) return;
+    const primitive = association.primitives;
+    const key = `${association.meshes}:${primitive}`;
+    if (![0, 1].includes(primitive) || targets.has(key) ||
+        object.material?.name !== json.materials[20 + primitive].name || !object.material.color?.isColor) {
+      compatible = false;
+      return;
+    }
+    targets.set(key, object);
+  });
+  // Si cambia la estructura del GLB, no modifica ningún material.
+  if (!compatible || targets.size !== 8) return null;
+  const rimMeshes = new Set(targets.values());
+  const otherMaterials = new Set();
+  gltf.scene.traverse((object) => {
+    if (!object.isMesh || rimMeshes.has(object)) return;
+    for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+      otherMaterials.add(material);
+    }
+  });
+  const clones = new Map();
+  const originals = new Map();
+  for (const object of rimMeshes) {
+    const source = object.material;
+    // Aísla solo materiales compartidos con otras piezas; conserva las texturas.
+    if (otherMaterials.has(source)) {
+      if (!clones.has(source)) clones.set(source, source.clone());
+      object.material = clones.get(source);
+    }
+    if (!originals.has(object.material)) originals.set(object.material, object.material.color.clone());
+  }
+  return originals;
+}
 
 async function initializeViewer() {
   let renderer, controls, model, observer, textureLoader, floor, keyLight;
   const paintMaterials = new Set();
+  let originalRimColors = new Map();
+  const rimColors = { black: "#17191c", silver: "#b8bec5", bronze: "#96704a", gold: "#c4a45a" };
+  const changeRimColor = (event) => {
+    if (!event.target.matches('input[name="rim"]')) return;
+    const name = event.target.value;
+    if (name !== "original" && !Object.hasOwn(rimColors, name)) return;
+    // Solo cambia el color; Original recupera el valor lineal exacto del GLB.
+    for (const [material, color] of originalRimColors) {
+      if (name === "original") material.color.copy(color);
+      else material.color.set(rimColors[name]);
+    }
+  };
   const originalFinishes = new Map();
   const finishProperties = ["roughness", "metalness", "clearcoat", "clearcoatRoughness"];
   const finishes = {
@@ -63,8 +128,10 @@ async function initializeViewer() {
     renderer?.domElement.remove();
     paintSelector.removeEventListener("change", changeColor);
     finishSelector.removeEventListener("change", changeFinish);
+    rimSelector.removeEventListener("change", changeRimColor);
     paintSelector.disabled = true;
     finishSelector.disabled = true;
+    rimSelector.disabled = true;
   }
   try {
     // El import map fija una misma versión para los módulos.
@@ -136,6 +203,23 @@ async function initializeViewer() {
       if (event.total) paintStatus.textContent = `Cargando CarConcept: ${Math.round(event.loaded / event.total * 100)} %`;
     });
     model = gltf.scene;
+    const rimMaterials = prepareRimMaterials(gltf);
+    if (rimMaterials) {
+      originalRimColors = rimMaterials;
+      rimSelector.disabled = false;
+      rimSelector.addEventListener("change", changeRimColor);
+      changeRimColor({ target: rimSelector.querySelector("input:checked") });
+      rimStatus.textContent = "Elige el color de las llantas; Original restaura su aspecto inicial.";
+    } else {
+      rimStatus.textContent = "No se pudieron identificar las llantas con seguridad. Controles desactivados.";
+      const candidates = [];
+      model.traverse((object) => {
+        if (!object.isMesh) return;
+        candidates.push({ mesh: object.name, materials: (Array.isArray(object.material)
+          ? object.material : [object.material]).map((material) => material.name) });
+      });
+      console.warn("Revisar mallas y materiales para identificar las llantas:", candidates);
+    }
     // Lista explícita verificada en el GLB, sin seleccionar interiores por color.
     const paintNames = new Set(["Paint 1 Carmine", "Paint 2 Carmine"]);
     model.traverse((object) => {

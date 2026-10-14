@@ -60,6 +60,16 @@
           <label><input type="radio" name="finish" value="glossy"> Brillante</label>
           <label><input type="radio" name="finish" value="metallic"> Metalizado</label>
         </fieldset>
+        <!-- Color independiente de la pintura y los acabados de carrocería. -->
+        <fieldset id="rim-selector" disabled aria-describedby="rim-status">
+          <legend>LLANTAS</legend>
+          <label><input type="radio" name="rim" value="original" checked> Original</label>
+          <label><input type="radio" name="rim" value="black"> Negro</label>
+          <label><input type="radio" name="rim" value="silver"> Plata</label>
+          <label><input type="radio" name="rim" value="bronze"> Bronce</label>
+          <label><input type="radio" name="rim" value="gold"> Dorado</label>
+        </fieldset>
+        <p id="rim-status" role="status" aria-live="polite">Cargando llantas...</p>
       </section>
     </main>
 
