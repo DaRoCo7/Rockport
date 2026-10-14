@@ -8,6 +8,7 @@ const viewer = document.querySelector("#car-viewer");
 const paintSelector = document.querySelector("#paint-selector");
 const finishSelector = document.querySelector("#finish-selector");
 const rimSelector = document.querySelector("#rim-selector");
+const rimDesignSelector = document.querySelector("#rim-design-selector");
 const rimStatus = document.querySelector("#rim-status");
 const paintStatus = document.querySelector("#paint-status");
 
@@ -59,13 +60,87 @@ function prepareRimMaterials(gltf) {
     }
     if (!originals.has(object.material)) originals.set(object.material, object.material.color.clone());
   }
-  return originals;
+  return { originals, targets };
+}
+
+function createFiveSpokeRims(THREE, targets, colors) {
+  const parts = [...targets.values()];
+  const bounds = new THREE.Box3();
+  for (const part of [targets.get("90:0"), targets.get("90:1")]) {
+    part.geometry.computeBoundingBox();
+    bounds.union(part.geometry.boundingBox);
+  }
+  const radius = Math.max(Math.abs(bounds.min.y), Math.abs(bounds.max.y),
+    Math.abs(bounds.min.z), Math.abs(bounds.max.z));
+  const innerRadius = radius * 0.94;
+  const face = bounds.max.x - radius * 0.08;
+  const depth = radius * 0.08;
+  // Barril hueco: deja el centro libre para el disco y la pinza originales.
+  const profile = [[bounds.min.x, innerRadius], [bounds.min.x, radius],
+    [bounds.max.x, radius], [bounds.max.x, innerRadius], [bounds.min.x, innerRadius]];
+  const barrelGeometry = new THREE.LatheGeometry(
+    profile.map(([x, r]) => new THREE.Vector2(r, x)), 64);
+  barrelGeometry.rotateZ(-Math.PI / 2);
+  const hubRadius = radius * 0.18;
+  const hubGeometry = new THREE.CylinderGeometry(hubRadius, hubRadius, depth, 32);
+  hubGeometry.rotateZ(-Math.PI / 2);
+  const spokeLength = innerRadius - hubRadius + radius * 0.04;
+  const spokeGeometry = new THREE.BoxGeometry(depth, spokeLength, radius * 0.10);
+  const source = parts.find((part) => part.material.name === "Rim1").material;
+  const material = new THREE.MeshStandardMaterial({
+    color: colors.get(source), metalness: 0.85, roughness: 0.3
+  });
+  colors.set(material, material.color.clone());
+  const replacements = [];
+  for (const meshIndex of [90, 92, 94, 96]) {
+    const original = targets.get(`${meshIndex}:0`);
+    const replacement = new THREE.Group();
+    replacement.name = `FiveSpokeRim${meshIndex}`;
+    // Mismo padre y transformación local: conserva giro, escala y centrado.
+    replacement.position.copy(original.parent.position);
+    replacement.quaternion.copy(original.parent.quaternion);
+    replacement.scale.copy(original.parent.scale);
+    const design = new THREE.Group();
+    // La cara exterior de las ruedas derechas mira hacia -X local.
+    if (meshIndex === 92 || meshIndex === 96) design.rotation.y = Math.PI;
+    replacement.add(design);
+    const barrel = new THREE.Mesh(barrelGeometry, material);
+    const hub = new THREE.Mesh(hubGeometry, material);
+    hub.position.x = face;
+    design.add(barrel, hub);
+    for (let i = 0; i < 5; i++) {
+      const angle = i * Math.PI * 2 / 5;
+      const spoke = new THREE.Mesh(spokeGeometry, material);
+      const distance = hubRadius + spokeLength / 2 - radius * 0.02;
+      spoke.position.set(face, Math.cos(angle) * distance, Math.sin(angle) * distance);
+      spoke.rotation.x = angle;
+      design.add(spoke);
+    }
+    replacement.traverse((object) => {
+      if (object.isMesh) object.castShadow = true;
+    });
+    replacement.visible = false;
+    original.parent.parent.add(replacement);
+    replacements.push(replacement);
+  }
+  return replacements;
 }
 
 async function initializeViewer() {
   let renderer, controls, model, observer, textureLoader, floor, keyLight;
   const paintMaterials = new Set();
   let originalRimColors = new Map();
+  let originalRimParts = [];
+  let replacementRims = [];
+  const changeRimDesign = (event) => {
+    if (!event.target.matches('input[name="rim-design"]')) return;
+    if (!["original", "five-spoke"].includes(event.target.value)) return;
+    const custom = event.target.value === "five-spoke";
+    // Oculta solo las ocho primitivas; conserva neumáticos, discos y frenos.
+    for (const part of originalRimParts) part.visible = !custom;
+    for (const replacement of replacementRims) replacement.visible = custom;
+    renderer.shadowMap.needsUpdate = true;
+  };
   const rimColors = { black: "#17191c", silver: "#b8bec5", bronze: "#96704a", gold: "#c4a45a" };
   const changeRimColor = (event) => {
     if (!event.target.matches('input[name="rim"]')) return;
@@ -109,15 +184,17 @@ async function initializeViewer() {
     observer?.disconnect();
     controls?.dispose();
     const materials = new Set();
+    const geometries = new Set();
     const textures = new Set();
     model?.traverse((object) => {
       if (!object.isMesh) return;
-      object.geometry.dispose();
+      geometries.add(object.geometry);
       for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
         materials.add(material);
         for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
       }
     });
+    for (const geometry of geometries) geometry.dispose();
     for (const texture of textures) texture.dispose();
     for (const material of materials) material.dispose();
     floor?.geometry.dispose();
@@ -129,9 +206,11 @@ async function initializeViewer() {
     paintSelector.removeEventListener("change", changeColor);
     finishSelector.removeEventListener("change", changeFinish);
     rimSelector.removeEventListener("change", changeRimColor);
+    rimDesignSelector.removeEventListener("change", changeRimDesign);
     paintSelector.disabled = true;
     finishSelector.disabled = true;
     rimSelector.disabled = true;
+    rimDesignSelector.disabled = true;
   }
   try {
     // El import map fija una misma versión para los módulos.
@@ -216,11 +295,16 @@ async function initializeViewer() {
     model = gltf.scene;
     const rimMaterials = prepareRimMaterials(gltf);
     if (rimMaterials) {
-      originalRimColors = rimMaterials;
+      originalRimColors = rimMaterials.originals;
+      originalRimParts = [...rimMaterials.targets.values()];
+      replacementRims = createFiveSpokeRims(THREE, rimMaterials.targets, originalRimColors);
+      rimDesignSelector.disabled = false;
+      rimDesignSelector.addEventListener("change", changeRimDesign);
+      changeRimDesign({ target: rimDesignSelector.querySelector("input:checked") });
       rimSelector.disabled = false;
       rimSelector.addEventListener("change", changeRimColor);
       changeRimColor({ target: rimSelector.querySelector("input:checked") });
-      rimStatus.textContent = "Elige el color de las llantas; Original restaura su aspecto inicial.";
+      rimStatus.textContent = "Elige diseño y color de llantas; el color Original restaura el acabado de cada diseño.";
     } else {
       rimStatus.textContent = "No se pudieron identificar las llantas con seguridad. Controles desactivados.";
       const candidates = [];

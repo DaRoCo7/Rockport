@@ -109,14 +109,14 @@ h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); }
 #paint-selector input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* Acabados en botones compactos, con selección y foco visibles. */
-:is(#finish-selector, #rim-selector) { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 18px; border: 1px solid #343539; }
-:is(#finish-selector, #rim-selector) legend { color: var(--accent); font-weight: 800; }
-:is(#finish-selector, #rim-selector) label { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #505156; font-weight: 700; cursor: pointer; }
-:is(#finish-selector, #rim-selector) label:has(input:checked) { color: var(--accent); border-color: var(--accent); background: #302b19; }
-:is(#finish-selector, #rim-selector) label:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
-:is(#finish-selector, #rim-selector) input { accent-color: var(--accent); }
-:is(#finish-selector, #rim-selector):disabled { opacity: 0.55; }
-:is(#finish-selector, #rim-selector):disabled label { cursor: default; }
+:is(#finish-selector, #rim-selector, #rim-design-selector) { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 18px; border: 1px solid #343539; }
+:is(#finish-selector, #rim-selector, #rim-design-selector) legend { color: var(--accent); font-weight: 800; }
+:is(#finish-selector, #rim-selector, #rim-design-selector) label { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #505156; font-weight: 700; cursor: pointer; }
+:is(#finish-selector, #rim-selector, #rim-design-selector) label:has(input:checked) { color: var(--accent); border-color: var(--accent); background: #302b19; }
+:is(#finish-selector, #rim-selector, #rim-design-selector) label:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+:is(#finish-selector, #rim-selector, #rim-design-selector) input { accent-color: var(--accent); }
+:is(#finish-selector, #rim-selector, #rim-design-selector):disabled { opacity: 0.55; }
+:is(#finish-selector, #rim-selector, #rim-design-selector):disabled label { cursor: default; }
 
 /* Ajustes básicos para pantallas pequeñas. */
 @media (max-width: 600px) {
